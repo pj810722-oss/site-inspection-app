@@ -1573,20 +1573,21 @@
       <circle cx="30" cy="30" r="26" fill="#ffffff" stroke="#d63b2f" stroke-width="3"/>
       <text x="30" y="38" font-size="22" font-weight="800" fill="#d63b2f" text-anchor="middle" font-family="sans-serif">#</text>
     </g>
-    <!-- 雙磚塊 2×2 brickwork -->
+    <!-- 磚牆 Brick Wall (emoji style) -->
     <g id="icon-brick">
-      <!-- top row: 2 bricks side by side -->
-      <rect x="4"  y="8"  width="24" height="20" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="2"/>
-      <rect x="32" y="8"  width="24" height="20" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="2"/>
-      <!-- bottom row: offset by half brick (brickwork pattern) -->
-      <rect x="4"  y="32" width="24" height="20" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="2"/>
-      <rect x="32" y="32" width="24" height="20" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="2"/>
-      <!-- mortar line between rows -->
-      <line x1="4" y1="30" x2="56" y2="30" stroke="#8a3f18" stroke-width="2"/>
-      <!-- vertical joint top row -->
-      <line x1="30" y1="8"  x2="30" y2="28" stroke="#8a3f18" stroke-width="2"/>
-      <!-- vertical joint bottom row (offset) -->
-      <line x1="30" y1="32" x2="30" y2="52" stroke="#8a3f18" stroke-width="2"/>
+      <!-- row 1 -->
+      <rect x="4"  y="6"  width="52" height="14" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/>
+      <line x1="30" y1="6" x2="30" y2="20" stroke="#f5e6d0" stroke-width="2"/>
+      <!-- row 2 (offset) -->
+      <rect x="4"  y="22" width="22" height="14" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/>
+      <rect x="28" y="22" width="28" height="14" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/>
+      <!-- row 3 -->
+      <rect x="4"  y="38" width="52" height="14" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/>
+      <line x1="18" y1="38" x2="18" y2="52" stroke="#f5e6d0" stroke-width="2"/>
+      <line x1="42" y1="38" x2="42" y2="52" stroke="#f5e6d0" stroke-width="2"/>
+      <!-- mortar lines between rows -->
+      <rect x="4" y="19" width="52" height="3" fill="#f5e6d0"/>
+      <rect x="4" y="35" width="52" height="3" fill="#f5e6d0"/>
     </g>
     <!-- 防水瓦 Roof Pipe Flashing -->
     <g id="icon-flashing">
@@ -3658,7 +3659,7 @@ function fpDrawStickerToExportCanvas(ctx, s) {
     const svgBodies = {
       indoor: `<rect x="4" y="20" width="52" height="18" rx="4" fill="#7fc4e8" stroke="#4a9bc4" stroke-width="2"/><rect x="8" y="25" width="44" height="3" fill="#ffffff" opacity="0.7"/><rect x="8" y="30" width="30" height="2.5" fill="#4a9bc4" opacity="0.6"/><circle cx="48" cy="29" r="2" fill="#1a46a0"/>`,
       outdoor: `<rect x="14" y="8" width="32" height="44" rx="3" fill="#1e3a6e" stroke="#152a52" stroke-width="2"/><circle cx="30" cy="22" r="9" fill="none" stroke="#7fa8d8" stroke-width="2"/><circle cx="30" cy="22" r="3" fill="#7fa8d8"/><circle cx="30" cy="40" r="9" fill="none" stroke="#7fa8d8" stroke-width="2"/><circle cx="30" cy="40" r="3" fill="#7fa8d8"/>`,
-      brick: `<rect x="4" y="8" width="24" height="20" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="2"/><rect x="32" y="8" width="24" height="20" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="2"/><rect x="4" y="32" width="24" height="20" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="2"/><rect x="32" y="32" width="24" height="20" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="2"/><line x1="4" y1="30" x2="56" y2="30" stroke="#8a3f18" stroke-width="2"/><line x1="30" y1="8" x2="30" y2="28" stroke="#8a3f18" stroke-width="2"/><line x1="30" y1="32" x2="30" y2="52" stroke="#8a3f18" stroke-width="2"/>`,
+      brick: `<rect x="4" y="6" width="52" height="14" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/><line x1="30" y1="6" x2="30" y2="20" stroke="#f5e6d0" stroke-width="2"/><rect x="4" y="22" width="22" height="14" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/><rect x="28" y="22" width="28" height="14" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/><rect x="4" y="38" width="52" height="14" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/><line x1="18" y1="38" x2="18" y2="52" stroke="#f5e6d0" stroke-width="2"/><line x1="42" y1="38" x2="42" y2="52" stroke="#f5e6d0" stroke-width="2"/><rect x="4" y="19" width="52" height="3" fill="#f5e6d0"/><rect x="4" y="35" width="52" height="3" fill="#f5e6d0"/>`,
       flashing: `<rect x="8" y="22" width="44" height="32" rx="2" fill="#b03a2e" stroke="#7b1f15" stroke-width="1.5"/><rect x="10" y="24" width="40" height="28" rx="1.5" fill="none" stroke="#e88070" stroke-width="1" opacity="0.5"/><ellipse cx="30" cy="34" rx="13" ry="9" fill="#c0392b" stroke="#7b1f15" stroke-width="1"/><ellipse cx="30" cy="32" rx="10" ry="7" fill="#c0392b" stroke="#7b1f15" stroke-width="1"/><ellipse cx="30" cy="30" rx="7" ry="5" fill="#c0392b" stroke="#7b1f15" stroke-width="1"/><rect x="26" y="4" width="8" height="26" rx="3" fill="#d0ccc8" stroke="#999" stroke-width="1.5"/>`,
       remove: `<rect x="4" y="12" width="52" height="36" rx="6" fill="#fff5f5" stroke="#c0392b" stroke-width="3"/><text x="30" y="37" font-size="15" font-weight="800" fill="#c0392b" text-anchor="middle" font-family="Arial, sans-serif" letter-spacing="0.5">REMOVE</text>`,
     };
