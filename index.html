@@ -50,6 +50,13 @@
     -webkit-tap-highlight-color: transparent;
     overflow: hidden;
     height: 100vh;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  /* Re-enable selection for text inputs and textareas */
+  input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
   }
 
   /* ---- Outer shell: floor plan (left) + questionnaire (right) ---- */
@@ -645,6 +652,19 @@
     border-color: #d9c48a;
     background: var(--gold-soft);
   }
+  .fee-row-canvas {
+    border-color: #a8c4e8;
+    background: var(--accent-soft);
+  }
+  .fee-row-canvas-tag {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--accent);
+    border: 1px solid #a8c4e8;
+    border-radius: 10px;
+    padding: 2px 7px;
+    flex: 0 0 auto;
+  }
   .fee-row-manual-tag {
     font-size: 10.5px;
     font-weight: 700;
@@ -1203,10 +1223,10 @@
     pointer-events: none;
   }
   .fp-tray {
-    flex: 0 0 130px;
+    flex: 0 0 160px;
     background: var(--panel);
     border-left: 1px solid var(--line);
-    padding: 10px;
+    padding: 10px 8px;
     overflow-y: auto;
   }
   .fp-tray-label {
@@ -1216,6 +1236,16 @@
     text-transform: uppercase;
     color: var(--muted);
     margin-bottom: 6px;
+    grid-column: 1 / -1; /* span both columns */
+  }
+  .fp-tray-divider {
+    height: 1px;
+    background: var(--line);
+    margin: 10px 0;
+  }
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
   }
   .fp-tray-btn {
     display: flex;
@@ -1223,18 +1253,17 @@
     align-items: center;
     gap: 3px;
     width: 100%;
-    padding: 8px 6px;
+    padding: 6px 4px;
     border-radius: 8px;
     border: 1.5px solid var(--line);
     background: var(--paper);
     cursor: pointer;
-    margin-bottom: 8px;
-    font-size: 10.5px;
+    font-size: 9.5px;
     font-weight: 700;
     color: var(--ink);
     transition: border-color 0.15s, background 0.15s;
   }
-  .fp-tray-btn svg { width: 28px; height: 28px; }
+  .fp-tray-btn svg { width: 26px; height: 26px; }
   /* Placement mode: tray button glows to show it's selected */
   .fp-tray-btn.fp-placing {
     border-color: var(--accent);
@@ -1331,14 +1360,14 @@
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background: #fff;
-    border: 3px solid #d63b2f;
+    background: #1e3a6e;
+    border: 2px solid #152a52;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 800;
     font-size: 24px;
-    color: #d63b2f;
+    color: #ffffff;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   }
   .fp-room-stepper {
@@ -1471,9 +1500,158 @@
     display: block;
     border: 1px solid var(--line);
   }
+
+  /* ---- Quick Mode ---- */
+  .quick-mode-cta {
+    padding: 0 20px 10px;
+    text-align: center;
+  }
+  .quick-mode-cta button {
+    width: 100%;
+    padding: 13px;
+    border-radius: 10px;
+    border: 2px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .quick-mode-hint {
+    margin-top: 6px;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .quick-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .quick-modal-overlay.open { display: flex; }
+  .quick-modal {
+    background: var(--panel);
+    border-radius: 16px;
+    padding: 24px 20px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+  .quick-modal h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    color: var(--accent);
+  }
+  .quick-modal .qm-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .quick-modal .qm-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .qm-options {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .qm-opt {
+    flex: 1;
+    min-width: 60px;
+    padding: 12px 8px;
+    border-radius: 10px;
+    border: 1.5px solid var(--line);
+    background: var(--paper);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    cursor: pointer;
+    text-align: center;
+  }
+  .qm-opt.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .qm-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .qm-cancel {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1.5px solid var(--line);
+    background: var(--paper);
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .qm-confirm {
+    flex: 2;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: var(--green);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .qm-combo-opts .qm-opt {
+    text-align: left;
+    padding: 11px 14px;
+    font-size: 13px;
+  }
+  .qm-confirm:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
 </style>
 </head>
 <body>
+<!-- Quick Mode Modal -->
+<div class="quick-modal-overlay" id="quickModalOverlay">
+  <div class="quick-modal">
+    <h2>⚡ 快速模式 Quick Mode</h2>
+    <div class="qm-sub">選完直接產生 WeChat 報告 Skip full assessment, go straight to report</div>
+
+    <div class="qm-label">一拖幾 Number of units</div>
+    <div class="qm-options" id="qmCountOpts">
+      <div class="qm-opt" data-qmcount="4">4台<br><span style="font-size:10px;font-weight:400">units</span></div>
+      <div class="qm-opt" data-qmcount="5">5台<br><span style="font-size:10px;font-weight:400">units</span></div>
+      <div class="qm-opt" data-qmcount="6">6台<br><span style="font-size:10px;font-weight:400">units</span></div>
+    </div>
+
+    <div class="qm-label">機型 System Type</div>
+    <div class="qm-options" id="qmTypeOpts">
+      <div class="qm-opt" data-qmtype="VRF">VRF</div>
+      <div class="qm-opt" data-qmtype="Multi">Multi</div>
+    </div>
+
+    <div id="qmComboSection" style="display:none">
+      <div class="qm-label">功率組合 Power Combination</div>
+      <div class="qm-options qm-combo-opts" id="qmComboOpts" style="flex-direction:column; gap:8px;"></div>
+    </div>
+
+    <div class="qm-actions">
+      <button class="qm-cancel" id="qmCancelBtn">取消 Cancel</button>
+      <button class="qm-confirm" id="qmConfirmBtn" disabled>產生報告 Generate Report →</button>
+    </div>
+  </div>
+</div>
 <div class="shell" id="shell">
   <div class="fp-pane" id="fpPane">
     <div class="fp-topbar">
@@ -1519,30 +1697,51 @@
           📷 上傳底圖 Upload
           <input type="file" accept="image/*" id="fpBgUpload" style="display:none">
         </label>
-        <div class="fp-tray-label">貼圖 Stickers</div>
-        <div class="fp-tray-btn" id="fpAddIndoor">
-          <svg viewBox="0 0 60 60"><use href="#icon-indoor"/></svg>
-          內機 Indoor
+
+        <div class="fp-tray-label">位置 Units</div>
+        <div class="fp-tray-grid">
+          <div class="fp-tray-btn" id="fpAddIndoor">
+            <svg viewBox="0 0 60 60"><use href="#icon-indoor"/></svg>
+            內機 Indoor
+          </div>
+          <div class="fp-tray-btn" id="fpAddOutdoor">
+            <svg viewBox="0 0 60 60"><use href="#icon-outdoor"/></svg>
+            外機 Outdoor
+          </div>
+          <div class="fp-tray-btn" id="fpAddRoom">
+            <svg viewBox="0 0 60 60"><use href="#icon-room"/></svg>
+            房間 Room
+          </div>
+          <div class="fp-tray-btn" id="fpAddSwitchboard">
+            <svg viewBox="0 0 60 60"><use href="#icon-switchboard"/></svg>
+            電箱 Switchboard
+          </div>
         </div>
-        <div class="fp-tray-btn" id="fpAddOutdoor">
-          <svg viewBox="0 0 60 60"><use href="#icon-outdoor"/></svg>
-          外機 Outdoor
-        </div>
-        <div class="fp-tray-btn" id="fpAddRoom">
-          <svg viewBox="0 0 60 60"><use href="#icon-room"/></svg>
-          房間 Room
-        </div>
-        <div class="fp-tray-btn" id="fpAddBrick">
-          <svg viewBox="0 0 60 60"><use href="#icon-brick"/></svg>
-          雙磚 Brick
-        </div>
-        <div class="fp-tray-btn" id="fpAddFlashing">
-          <svg viewBox="0 0 60 60"><use href="#icon-flashing"/></svg>
-          防水瓦 Flashing
-        </div>
-        <div class="fp-tray-btn" id="fpAddRemove">
-          <svg viewBox="0 0 60 60"><use href="#icon-remove"/></svg>
-          移除 Remove
+
+        <div class="fp-tray-divider"></div>
+
+        <div class="fp-tray-label">費用 Fees</div>
+        <div class="fp-tray-grid">
+          <div class="fp-tray-btn" id="fpAddBrick">
+            <svg viewBox="0 0 60 60"><use href="#icon-brick"/></svg>
+            Double Brick
+          </div>
+          <div class="fp-tray-btn" id="fpAddFlashing">
+            <svg viewBox="0 0 60 60"><use href="#icon-flashing"/></svg>
+            Roof Pipe Flashing
+          </div>
+          <div class="fp-tray-btn" id="fpAddRemove">
+            <svg viewBox="0 0 60 60"><use href="#icon-remove"/></svg>
+            移除外機
+          </div>
+          <div class="fp-tray-btn" id="fpAddReplace">
+            <svg viewBox="0 0 60 60"><use href="#icon-replace"/></svg>
+            換內機
+          </div>
+          <div class="fp-tray-btn" id="fpAddPump">
+            <svg viewBox="0 0 60 60"><use href="#icon-pump"/></svg>
+            水泵 Pump
+          </div>
         </div>
       </div>
     </div>
@@ -1570,24 +1769,19 @@
       <circle cx="30" cy="40" r="3" fill="#7fa8d8"/>
     </g>
     <g id="icon-room">
-      <circle cx="30" cy="30" r="26" fill="#ffffff" stroke="#d63b2f" stroke-width="3"/>
-      <text x="30" y="38" font-size="22" font-weight="800" fill="#d63b2f" text-anchor="middle" font-family="sans-serif">#</text>
+      <circle cx="30" cy="30" r="26" fill="#1e3a6e" stroke="#152a52" stroke-width="2"/>
+      <text x="30" y="38" font-size="22" font-weight="800" fill="#ffffff" text-anchor="middle" font-family="sans-serif">#</text>
     </g>
-    <!-- 磚牆 Brick Wall (emoji style) -->
+    <!-- 磚牆 Brick Wall - 2 rows -->
     <g id="icon-brick">
       <!-- row 1 -->
-      <rect x="4"  y="6"  width="52" height="14" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/>
-      <line x1="30" y1="6" x2="30" y2="20" stroke="#f5e6d0" stroke-width="2"/>
+      <rect x="4"  y="16" width="52" height="16" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/>
+      <line x1="30" y1="16" x2="30" y2="32" stroke="#f5e6d0" stroke-width="2"/>
+      <!-- mortar -->
+      <rect x="4" y="31" width="52" height="3" fill="#f5e6d0"/>
       <!-- row 2 (offset) -->
-      <rect x="4"  y="22" width="22" height="14" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/>
-      <rect x="28" y="22" width="28" height="14" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/>
-      <!-- row 3 -->
-      <rect x="4"  y="38" width="52" height="14" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/>
-      <line x1="18" y1="38" x2="18" y2="52" stroke="#f5e6d0" stroke-width="2"/>
-      <line x1="42" y1="38" x2="42" y2="52" stroke="#f5e6d0" stroke-width="2"/>
-      <!-- mortar lines between rows -->
-      <rect x="4" y="19" width="52" height="3" fill="#f5e6d0"/>
-      <rect x="4" y="35" width="52" height="3" fill="#f5e6d0"/>
+      <rect x="4"  y="33" width="22" height="16" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/>
+      <rect x="28" y="33" width="28" height="16" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/>
     </g>
     <!-- 防水瓦 Roof Pipe Flashing -->
     <g id="icon-flashing">
@@ -1608,11 +1802,40 @@
 <!-- hidden: remove icon defined inline for tray -->
 <svg width="0" height="0" style="position:absolute">
   <defs>
+    <!-- REMOVE 外機 - grey box unit with REMOVE label -->
     <g id="icon-remove">
-      <!-- rounded border box -->
-      <rect x="4" y="12" width="52" height="36" rx="6" fill="#fff5f5" stroke="#c0392b" stroke-width="3"/>
-      <!-- REMOVE text -->
-      <text x="30" y="37" font-size="15" font-weight="800" fill="#c0392b" text-anchor="middle" font-family="Arial, sans-serif" letter-spacing="0.5">REMOVE</text>
+      <!-- box body -->
+      <rect x="6" y="8" width="48" height="32" rx="3" fill="#9e9689" stroke="#6b6358" stroke-width="2"/>
+      <!-- front panel details -->
+      <rect x="9" y="11" width="10" height="26" rx="1" fill="#b5afa6" stroke="#6b6358" stroke-width="1"/>
+      <!-- fan circle -->
+      <circle cx="36" cy="24" r="10" fill="#7a7570" stroke="#6b6358" stroke-width="1.5"/>
+      <circle cx="36" cy="24" r="5" fill="#9e9689"/>
+      <circle cx="36" cy="24" r="2" fill="#6b6358"/>
+      <!-- small pipe/fitting top right -->
+      <rect x="46" y="11" width="5" height="4" rx="1" fill="#c8a86b" stroke="#8a6b3a" stroke-width="1"/>
+      <!-- REMOVE label -->
+      <text x="30" y="54" font-size="11" font-weight="900" fill="#c0392b" text-anchor="middle" font-family="Arial Black, Arial, sans-serif">REMOVE</text>
+    </g>
+    <!-- REPLACE 內機 - wall-mounted AC with REPLACE label -->
+    <g id="icon-replace">
+      <!-- AC unit body -->
+      <rect x="4" y="12" width="52" height="20" rx="4" fill="#7fc4e8" stroke="#4a9bc4" stroke-width="2"/>
+      <!-- front grille lines -->
+      <rect x="8" y="17" width="44" height="3" fill="#ffffff" opacity="0.7"/>
+      <rect x="8" y="22" width="30" height="2" fill="#4a9bc4" opacity="0.6"/>
+      <circle cx="48" cy="22" r="2" fill="#1a46a0"/>
+      <!-- REPLACE label -->
+      <text x="30" y="50" font-size="10" font-weight="900" fill="#1a46a0" text-anchor="middle" font-family="Arial Black, Arial, sans-serif">REPLACE</text>
+    </g>
+    <!-- 水泵 Pump - bold P in royal blue -->
+    <g id="icon-pump">
+      <text x="30" y="44" font-size="46" font-weight="900" fill="#1A46A0" text-anchor="middle" font-family="Arial Black, Arial, sans-serif">P</text>
+    </g>
+    <!-- 電箱 Switchboard - gold lightning bolt -->
+    <g id="icon-switchboard">
+      <!-- lightning bolt shape -->
+      <polygon points="34,4 18,32 28,32 24,56 42,26 31,26" fill="#D4AF37" stroke="#A0831A" stroke-width="1.5" stroke-linejoin="round"/>
     </g>
   </defs>
 </svg>
@@ -1990,7 +2213,7 @@ const SECTIONS = [
         dropdownLabel: "穿瓦費 — 幾個 Tile penetration fee — how many",
         dropdownOptions: ["1個 1 unit", "2個 2 units", "3個 3 units", "4個 4 units", "5個以上 5+ units"],
         feeIf: "需穿瓦費",
-        feeTextFn: (count, dropdownVal) => `防水瓦 ×${(dropdownVal||'1個').match(/^\d+/)?.[0]||1} Waterproof tile ×${(dropdownVal||'1 unit').match(/^\d+/)?.[0]||1}`
+        feeTextFn: (count, dropdownVal) => `Roof Pipe Flashing ×${(dropdownVal||'1個').match(/^\d+/)?.[0]||1}`
       },
       { id: "exterior_note", type: "note_list", text: "補充說明 Additional Notes", hint: "可上傳照片 Photo upload available" },
     ]
@@ -2129,10 +2352,29 @@ function collectFees() {
   return collectFeesWithOverrides().map(f => f.text);
 }
 
+function collectStickerFees() {
+  // Count stickers by type from the floor plan canvas and generate fee entries.
+  // These are separate from the questionnaire answers and override nothing —
+  // they just add additional fee lines based on what's been placed on the canvas.
+  if (!window.fpStickers || fpStickers.length === 0) return [];
+  const counts = {};
+  fpStickers.forEach(s => {
+    counts[s.type] = (counts[s.type] || 0) + 1;
+  });
+  const fees = [];
+  if (counts.brick) fees.push({ id: 'sticker_brick', text: `雙磚費 ×${counts.brick}間 Double brick fee ×${counts.brick}`, source: 'canvas' });
+  if (counts.flashing) fees.push({ id: 'sticker_flashing', text: `Roof Pipe Flashing ×${counts.flashing}`, source: 'canvas' });
+  if (counts.remove) fees.push({ id: 'sticker_remove', text: `舊機移除費（外機） ×${counts.remove} Remove outdoor unit ×${counts.remove}`, source: 'canvas' });
+  if (counts.replace) fees.push({ id: 'sticker_replace', text: `拆機費（內機） ×${counts.replace} Removal fee (indoor) ×${counts.replace}`, source: 'canvas' });
+  if (counts.pump) fees.push({ id: 'sticker_pump', text: `水泵 ×${counts.pump} Pump ×${counts.pump}`, source: 'canvas' });
+  return fees;
+}
+
 function collectFeesWithOverrides() {
   const raw = collectRawFees();
+  const canvas = collectStickerFees();
   const manual = (state.manualFees || []).map((text, i) => ({ id: `manual_${i}`, text, source: 'manual' }));
-  return [...raw, ...manual];
+  return [...raw, ...canvas, ...manual];
 }
 
 function collectSalesNotes() {
@@ -2376,6 +2618,10 @@ function renderHub() {
         ${overall === 100 ? `結束 inspection End Inspection ${allWarnings.length > 0 ? `(⚠ ${allWarnings.length}項限制 ${allWarnings.length} limitation(s))` : ''}` : `尚有未完成項目 Items remaining (${overall}%)`}
       </button>
     </div>
+    <div class="quick-mode-cta">
+      <button id="quickModeBtn">⚡ 快速模式 Quick Mode</button>
+      <div class="quick-mode-hint">只選一拖幾，直接產生報告 Select unit count only, skip to report</div>
+    </div>
     <div style="height:30px"></div>
   `;
 }
@@ -2392,7 +2638,97 @@ function attachHubEvents() {
     state.view = "results";
     render();
   });
+  const qmBtn = document.getElementById('quickModeBtn');
+  if (qmBtn) {
+    qmBtn.addEventListener('click', () => {
+      // Reset selections
+      document.querySelectorAll('.qm-opt').forEach(o => o.classList.remove('selected'));
+      document.getElementById('qmConfirmBtn').disabled = true;
+      document.getElementById('quickModalOverlay').classList.add('open');
+    });
+  }
 }
+
+/* ---- Quick Mode modal logic (attached once at startup) ---- */
+(function setupQuickMode() {
+  let qmCount = null, qmType = null, qmComboKey = null;
+
+  function checkQmReady() {
+    const combos = HP_COMBOS[qmCount] || [];
+    const needsCombo = combos.length > 1;
+    const ready = qmCount && qmType && (!needsCombo || qmComboKey);
+    document.getElementById('qmConfirmBtn').disabled = !ready;
+  }
+
+  function renderQmCombos() {
+    const comboSection = document.getElementById('qmComboSection');
+    const comboOpts = document.getElementById('qmComboOpts');
+    if (!qmCount) { comboSection.style.display = 'none'; return; }
+    const combos = HP_COMBOS[qmCount] || [];
+    if (combos.length <= 1) {
+      // only one combo — auto-select it, don't show the section
+      qmComboKey = combos[0] ? combos[0].key : null;
+      comboSection.style.display = 'none';
+      return;
+    }
+    qmComboKey = null;
+    comboSection.style.display = 'block';
+    comboOpts.innerHTML = combos.map(c => `
+      <div class="qm-opt" data-qmcombo="${c.key}">${c.label}</div>
+    `).join('');
+    comboOpts.querySelectorAll('[data-qmcombo]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        comboOpts.querySelectorAll('[data-qmcombo]').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        qmComboKey = btn.getAttribute('data-qmcombo');
+        checkQmReady();
+      });
+    });
+    checkQmReady();
+  }
+
+  document.getElementById('qmCancelBtn').addEventListener('click', () => {
+    document.getElementById('quickModalOverlay').classList.remove('open');
+  });
+
+  document.querySelectorAll('[data-qmcount]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-qmcount]').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      qmCount = btn.getAttribute('data-qmcount');
+      qmComboKey = null;
+      renderQmCombos();
+      checkQmReady();
+    });
+  });
+
+  document.querySelectorAll('[data-qmtype]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-qmtype]').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      qmType = btn.getAttribute('data-qmtype');
+      checkQmReady();
+    });
+  });
+
+  document.getElementById('qmConfirmBtn').addEventListener('click', () => {
+    if (!qmCount || !qmType) return;
+    state.answers['indoor_count'] = qmCount;
+    state.answers['system_type'] = qmType;
+    // Save the combo selection (same format as the full questionnaire)
+    if (qmComboKey) {
+      state.answers['hp_combo'] = qmComboKey;
+    } else {
+      // single combo auto-selected
+      const combos = HP_COMBOS[qmCount] || [];
+      if (combos[0]) state.answers['hp_combo'] = combos[0].key;
+    }
+    state.wechatSummary = null;
+    state.view = "results";
+    document.getElementById('quickModalOverlay').classList.remove('open');
+    render();
+  });
+})();
 
 /* ---------------- SECTION view ---------------- */
 
@@ -2521,6 +2857,18 @@ function renderQuestion(q) {
         </div>`;
     }).join('');
 
+    // Canvas-derived fees (from stickers placed on the floor plan)
+    const canvasFees = collectStickerFees();
+    let canvasRows = canvasFees.length > 0 ? `
+      <div class="fee-group">
+        <div class="fee-group-label">📐 畫布貼圖 Canvas Stickers</div>
+        ${canvasFees.map(f => `
+          <div class="fee-row fee-row-canvas">
+            <span class="fee-row-canvas-tag">畫布 Canvas</span>
+            <span class="fee-row-text">${f.text}</span>
+          </div>`).join('')}
+      </div>` : '';
+
     let manualRows = manualFees.map((text, i) => `
       <div class="fee-row fee-row-manual">
         <span class="fee-row-manual-tag">手動 Manual</span>
@@ -2536,6 +2884,7 @@ function renderQuestion(q) {
         ${q.hint ? `<div class="qhint">${q.hint}</div>` : ''}
         <div class="fee-question-groups">
           ${groupsHtml}
+          ${canvasRows}
         </div>
         <div class="fee-manual-section">
           <div class="fee-group-label">手動新增 Manual Additions</div>
@@ -2883,7 +3232,7 @@ function renderResults() {
       if (q.type === 'fee_summary') {
         const finalFees = collectFeesWithOverrides();
         if (finalFees.length === 0) return '';
-        return finalFees.map(f => `<div class="res-row"><div class="k">${f.source === 'manual' ? '手動 Manual' : '自動 Auto'}</div><div class="v">${f.text}</div></div>`).join('');
+        return finalFees.map(f => `<div class="res-row"><div class="k">${f.source === 'manual' ? '手動 Manual' : f.source === 'canvas' ? '畫布 Canvas' : '自動 Auto'}</div><div class="v">${f.text}</div></div>`).join('');
       }
       if (q.type === 'hp_combo') {
         const selected = state.answers[q.id];
@@ -3282,6 +3631,9 @@ function fpStartPlacing(type) {
     : type === 'brick' ? 'fpAddBrick'
     : type === 'flashing' ? 'fpAddFlashing'
     : type === 'remove' ? 'fpAddRemove'
+    : type === 'replace' ? 'fpAddReplace'
+    : type === 'pump' ? 'fpAddPump'
+    : type === 'switchboard' ? 'fpAddSwitchboard'
     : 'fpAddRoom';
   const activeBtn = document.getElementById(activeId);
   if (activeBtn) activeBtn.classList.add('fp-placing');
@@ -3292,7 +3644,7 @@ function fpStartPlacing(type) {
 
 function fpCancelPlacing() {
   fpPendingSticker = null;
-  ['fpAddIndoor', 'fpAddOutdoor', 'fpAddRoom', 'fpAddBrick', 'fpAddFlashing', 'fpAddRemove'].forEach(id => {
+  ['fpAddIndoor', 'fpAddOutdoor', 'fpAddRoom', 'fpAddBrick', 'fpAddFlashing', 'fpAddRemove', 'fpAddReplace', 'fpAddPump', 'fpAddSwitchboard'].forEach(id => {
     const btn = document.getElementById(id);
     if (btn) btn.classList.remove('fp-placing');
   });
@@ -3330,6 +3682,18 @@ document.getElementById('fpAddFlashing').addEventListener('click', () => {
 document.getElementById('fpAddRemove').addEventListener('click', () => {
   if (fpPendingSticker === 'remove') { fpCancelPlacing(); return; }
   fpStartPlacing('remove');
+});
+document.getElementById('fpAddReplace').addEventListener('click', () => {
+  if (fpPendingSticker === 'replace') { fpCancelPlacing(); return; }
+  fpStartPlacing('replace');
+});
+document.getElementById('fpAddPump').addEventListener('click', () => {
+  if (fpPendingSticker === 'pump') { fpCancelPlacing(); return; }
+  fpStartPlacing('pump');
+});
+document.getElementById('fpAddSwitchboard').addEventListener('click', () => {
+  if (fpPendingSticker === 'switchboard') { fpCancelPlacing(); return; }
+  fpStartPlacing('switchboard');
 });
 document.getElementById('fpClearBtn').addEventListener('click', () => {
   // confirm() is silently blocked inside sandboxed iframes (Claude Artifact
@@ -3642,12 +4006,12 @@ function fpDrawStickerToExportCanvas(ctx, s) {
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = '#1e3a6e';
       ctx.fill();
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = '#d63b2f';
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#152a52';
       ctx.stroke();
-      ctx.fillStyle = '#d63b2f';
+      ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 14px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -3659,9 +4023,12 @@ function fpDrawStickerToExportCanvas(ctx, s) {
     const svgBodies = {
       indoor: `<rect x="4" y="20" width="52" height="18" rx="4" fill="#7fc4e8" stroke="#4a9bc4" stroke-width="2"/><rect x="8" y="25" width="44" height="3" fill="#ffffff" opacity="0.7"/><rect x="8" y="30" width="30" height="2.5" fill="#4a9bc4" opacity="0.6"/><circle cx="48" cy="29" r="2" fill="#1a46a0"/>`,
       outdoor: `<rect x="14" y="8" width="32" height="44" rx="3" fill="#1e3a6e" stroke="#152a52" stroke-width="2"/><circle cx="30" cy="22" r="9" fill="none" stroke="#7fa8d8" stroke-width="2"/><circle cx="30" cy="22" r="3" fill="#7fa8d8"/><circle cx="30" cy="40" r="9" fill="none" stroke="#7fa8d8" stroke-width="2"/><circle cx="30" cy="40" r="3" fill="#7fa8d8"/>`,
-      brick: `<rect x="4" y="6" width="52" height="14" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/><line x1="30" y1="6" x2="30" y2="20" stroke="#f5e6d0" stroke-width="2"/><rect x="4" y="22" width="22" height="14" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/><rect x="28" y="22" width="28" height="14" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/><rect x="4" y="38" width="52" height="14" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/><line x1="18" y1="38" x2="18" y2="52" stroke="#f5e6d0" stroke-width="2"/><line x1="42" y1="38" x2="42" y2="52" stroke="#f5e6d0" stroke-width="2"/><rect x="4" y="19" width="52" height="3" fill="#f5e6d0"/><rect x="4" y="35" width="52" height="3" fill="#f5e6d0"/>`,
+      brick: `<rect x="4" y="16" width="52" height="16" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/><line x1="30" y1="16" x2="30" y2="32" stroke="#f5e6d0" stroke-width="2"/><rect x="4" y="31" width="52" height="3" fill="#f5e6d0"/><rect x="4" y="33" width="22" height="16" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/><rect x="28" y="33" width="28" height="16" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/>`,
       flashing: `<rect x="8" y="22" width="44" height="32" rx="2" fill="#b03a2e" stroke="#7b1f15" stroke-width="1.5"/><rect x="10" y="24" width="40" height="28" rx="1.5" fill="none" stroke="#e88070" stroke-width="1" opacity="0.5"/><ellipse cx="30" cy="34" rx="13" ry="9" fill="#c0392b" stroke="#7b1f15" stroke-width="1"/><ellipse cx="30" cy="32" rx="10" ry="7" fill="#c0392b" stroke="#7b1f15" stroke-width="1"/><ellipse cx="30" cy="30" rx="7" ry="5" fill="#c0392b" stroke="#7b1f15" stroke-width="1"/><rect x="26" y="4" width="8" height="26" rx="3" fill="#d0ccc8" stroke="#999" stroke-width="1.5"/>`,
-      remove: `<rect x="4" y="12" width="52" height="36" rx="6" fill="#fff5f5" stroke="#c0392b" stroke-width="3"/><text x="30" y="37" font-size="15" font-weight="800" fill="#c0392b" text-anchor="middle" font-family="Arial, sans-serif" letter-spacing="0.5">REMOVE</text>`,
+      remove: `<rect x="6" y="8" width="48" height="32" rx="3" fill="#9e9689" stroke="#6b6358" stroke-width="2"/><rect x="9" y="11" width="10" height="26" rx="1" fill="#b5afa6" stroke="#6b6358" stroke-width="1"/><circle cx="36" cy="24" r="10" fill="#7a7570" stroke="#6b6358" stroke-width="1.5"/><circle cx="36" cy="24" r="5" fill="#9e9689"/><circle cx="36" cy="24" r="2" fill="#6b6358"/><rect x="46" y="11" width="5" height="4" rx="1" fill="#c8a86b" stroke="#8a6b3a" stroke-width="1"/><text x="30" y="54" font-size="11" font-weight="900" fill="#c0392b" text-anchor="middle" font-family="Arial Black, Arial, sans-serif">REMOVE</text>`,
+      replace: `<rect x="4" y="12" width="52" height="20" rx="4" fill="#7fc4e8" stroke="#4a9bc4" stroke-width="2"/><rect x="8" y="17" width="44" height="3" fill="#ffffff" opacity="0.7"/><rect x="8" y="22" width="30" height="2" fill="#4a9bc4" opacity="0.6"/><circle cx="48" cy="22" r="2" fill="#1a46a0"/><text x="30" y="50" font-size="10" font-weight="900" fill="#1a46a0" text-anchor="middle" font-family="Arial Black, Arial, sans-serif">REPLACE</text>`,
+      pump: `<text x="30" y="44" font-size="46" font-weight="900" fill="#1A46A0" text-anchor="middle" font-family="Arial Black, Arial, sans-serif">P</text>`,
+      switchboard: `<polygon points="34,4 18,32 28,32 24,56 42,26 31,26" fill="#D4AF37" stroke="#A0831A" stroke-width="1.5" stroke-linejoin="round"/>`,
     };
     const body = svgBodies[s.type] || svgBodies.indoor;
     const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">${body}</svg>`;
@@ -3680,21 +4047,40 @@ function fpDrawStickerToExportCanvas(ctx, s) {
 }
 
 async function fpExportImage() {
+  // Legend entries — every sticker type with its meaning
+  const LEGEND = [
+    { type: 'indoor',      label: 'Indoor Unit' },
+    { type: 'outdoor',     label: 'Outdoor Unit' },
+    { type: 'room',        label: 'Room Number' },
+    { type: 'switchboard', label: 'Switchboard' },
+    { type: 'brick',       label: 'Double Brick Wall' },
+    { type: 'flashing',    label: 'Roof Pipe Flashing' },
+    { type: 'remove',      label: 'Remove Outdoor Unit' },
+    { type: 'replace',     label: 'Replace Indoor Unit' },
+    { type: 'pump',        label: 'Condensate Pump' },
+  ];
+
+  const ICON_SIZE = 36;
+  const ROW_H = 44;
+  const COLS = 3;
+  const PAD = 16;
+  const LABEL_FONT = '12px -apple-system, Arial, sans-serif';
+  const ROWS = Math.ceil(LEGEND.length / COLS);
+  const COL_W = Math.floor(fpCanvasWidth / COLS);
+  const legendH = PAD + 28 + ROWS * ROW_H + PAD; // header + rows + padding
+
   const exportCanvas = document.createElement('canvas');
   exportCanvas.width = fpCanvasWidth;
-  exportCanvas.height = fpCanvasHeight;
+  exportCanvas.height = fpCanvasHeight + legendH;
   const ctx = exportCanvas.getContext('2d');
 
-  // 1. background
+  // 1. floor plan background
   ctx.fillStyle = '#e8edf5';
   ctx.fillRect(0, 0, fpCanvasWidth, fpCanvasHeight);
   if (fpBgImageSrc) {
     await new Promise((resolve) => {
       const img = new Image();
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, fpCanvasWidth, fpCanvasHeight);
-        resolve();
-      };
+      img.onload = () => { ctx.drawImage(img, 0, 0, fpCanvasWidth, fpCanvasHeight); resolve(); };
       img.onerror = () => resolve();
       img.src = fpBgImageSrc;
     });
@@ -3703,10 +4089,72 @@ async function fpExportImage() {
   // 2. hand-drawn strokes
   ctx.drawImage(fpDrawCanvas, 0, 0);
 
-  // 3. stickers (sequentially, since each may need to load an offscreen image)
+  // 3. stickers
   for (const s of fpStickers) {
     await fpDrawStickerToExportCanvas(ctx, s);
   }
+
+  // 4. legend panel
+  const panelY = fpCanvasHeight;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, panelY, fpCanvasWidth, legendH);
+
+  // blue top border
+  ctx.fillStyle = '#1a46a0';
+  ctx.fillRect(0, panelY, fpCanvasWidth, 4);
+
+  // header
+  ctx.fillStyle = '#1a46a0';
+  ctx.font = 'bold 14px -apple-system, Arial, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  const customer = state.answers['customer_name'] || '';
+  const addr = state.answers['address'] || '';
+  const headerText = [customer, addr].filter(Boolean).join('  |  ');
+  ctx.fillText('📐 Symbol Key' + (headerText ? '  |  ' + headerText : ''), PAD, panelY + PAD + 10);
+
+  // legend items — load each SVG icon and draw alongside label
+  const svgBodies = {
+    indoor:      `<rect x="4" y="20" width="52" height="18" rx="4" fill="#7fc4e8" stroke="#4a9bc4" stroke-width="2"/><rect x="8" y="25" width="44" height="3" fill="#ffffff" opacity="0.7"/>`,
+    outdoor:     `<rect x="14" y="8" width="32" height="44" rx="3" fill="#1e3a6e" stroke="#152a52" stroke-width="2"/><circle cx="30" cy="22" r="9" fill="none" stroke="#7fa8d8" stroke-width="2"/><circle cx="30" cy="22" r="3" fill="#7fa8d8"/>`,
+    room:        `<circle cx="30" cy="30" r="26" fill="#1e3a6e" stroke="#152a52" stroke-width="2"/><text x="30" y="38" font-size="22" font-weight="800" fill="#ffffff" text-anchor="middle" font-family="sans-serif">1</text>`,
+    switchboard: `<polygon points="34,4 18,32 28,32 24,56 42,26 31,26" fill="#D4AF37" stroke="#A0831A" stroke-width="1.5" stroke-linejoin="round"/>`,
+    brick:       `<rect x="4" y="16" width="52" height="16" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/><rect x="4" y="31" width="52" height="3" fill="#f5e6d0"/><rect x="4" y="33" width="22" height="16" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/><rect x="28" y="33" width="28" height="16" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/>`,
+    flashing:    `<rect x="8" y="22" width="44" height="32" rx="2" fill="#b03a2e" stroke="#7b1f15" stroke-width="1.5"/><ellipse cx="30" cy="34" rx="13" ry="9" fill="#c0392b" stroke="#7b1f15" stroke-width="1"/><rect x="26" y="4" width="8" height="26" rx="3" fill="#d0ccc8" stroke="#999" stroke-width="1.5"/>`,
+    remove:      `<rect x="6" y="8" width="48" height="32" rx="3" fill="#9e9689" stroke="#6b6358" stroke-width="2"/><circle cx="36" cy="24" r="10" fill="#7a7570" stroke="#6b6358" stroke-width="1.5"/><text x="30" y="54" font-size="11" font-weight="900" fill="#c0392b" text-anchor="middle" font-family="Arial Black, Arial, sans-serif">REMOVE</text>`,
+    replace:     `<rect x="4" y="12" width="52" height="20" rx="4" fill="#7fc4e8" stroke="#4a9bc4" stroke-width="2"/><rect x="8" y="17" width="44" height="3" fill="#ffffff" opacity="0.7"/><text x="30" y="50" font-size="10" font-weight="900" fill="#1a46a0" text-anchor="middle" font-family="Arial Black, Arial, sans-serif">REPLACE</text>`,
+    pump:        `<text x="30" y="44" font-size="46" font-weight="900" fill="#1A46A0" text-anchor="middle" font-family="Arial Black, Arial, sans-serif">P</text>`,
+  };
+
+  const itemStartY = panelY + PAD + 28;
+
+  await Promise.all(LEGEND.map((item, i) => new Promise((resolve) => {
+    const col = i % COLS;
+    const row = Math.floor(i / COLS);
+    const x = col * COL_W + PAD;
+    const y = itemStartY + row * ROW_H;
+
+    const body = svgBodies[item.type] || '';
+    const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">${body}</svg>`;
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, x, y + (ROW_H - ICON_SIZE) / 2, ICON_SIZE, ICON_SIZE);
+
+      // label text
+      ctx.fillStyle = '#0f1f3d';
+      ctx.font = LABEL_FONT;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(item.label, x + ICON_SIZE + 8, y + ROW_H / 2);
+      resolve();
+    };
+    img.onerror = () => resolve();
+    img.src = 'data:image/svg+xml;base64,' + btoa(svgMarkup);
+  })));
+
+  // bottom divider
+  ctx.fillStyle = '#d0d8e8';
+  ctx.fillRect(0, panelY + legendH - 1, fpCanvasWidth, 1);
 
   return exportCanvas;
 }
