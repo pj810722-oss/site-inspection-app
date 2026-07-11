@@ -1540,6 +1540,10 @@
           <svg viewBox="0 0 60 60"><use href="#icon-flashing"/></svg>
           防水瓦 Flashing
         </div>
+        <div class="fp-tray-btn" id="fpAddRemove">
+          <svg viewBox="0 0 60 60"><use href="#icon-remove"/></svg>
+          移除 Remove
+        </div>
       </div>
     </div>
   </div>
@@ -1596,6 +1600,18 @@
       <ellipse cx="30" cy="30" rx="7"  ry="5"  fill="#c0392b" stroke="#7b1f15" stroke-width="1"/>
       <!-- pipe coming through -->
       <rect x="26" y="4" width="8" height="26" rx="3" fill="#d0ccc8" stroke="#999" stroke-width="1.5"/>
+    </g>
+  </defs>
+</svg>
+
+<!-- hidden: remove icon defined inline for tray -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <g id="icon-remove">
+      <!-- rounded border box -->
+      <rect x="4" y="12" width="52" height="36" rx="6" fill="#fff5f5" stroke="#c0392b" stroke-width="3"/>
+      <!-- REMOVE text -->
+      <text x="30" y="37" font-size="15" font-weight="800" fill="#c0392b" text-anchor="middle" font-family="Arial, sans-serif" letter-spacing="0.5">REMOVE</text>
     </g>
   </defs>
 </svg>
@@ -3264,6 +3280,7 @@ function fpStartPlacing(type) {
     : type === 'outdoor' ? 'fpAddOutdoor'
     : type === 'brick' ? 'fpAddBrick'
     : type === 'flashing' ? 'fpAddFlashing'
+    : type === 'remove' ? 'fpAddRemove'
     : 'fpAddRoom';
   const activeBtn = document.getElementById(activeId);
   if (activeBtn) activeBtn.classList.add('fp-placing');
@@ -3274,7 +3291,7 @@ function fpStartPlacing(type) {
 
 function fpCancelPlacing() {
   fpPendingSticker = null;
-  ['fpAddIndoor', 'fpAddOutdoor', 'fpAddRoom', 'fpAddBrick', 'fpAddFlashing'].forEach(id => {
+  ['fpAddIndoor', 'fpAddOutdoor', 'fpAddRoom', 'fpAddBrick', 'fpAddFlashing', 'fpAddRemove'].forEach(id => {
     const btn = document.getElementById(id);
     if (btn) btn.classList.remove('fp-placing');
   });
@@ -3308,6 +3325,10 @@ document.getElementById('fpAddBrick').addEventListener('click', () => {
 document.getElementById('fpAddFlashing').addEventListener('click', () => {
   if (fpPendingSticker === 'flashing') { fpCancelPlacing(); return; }
   fpStartPlacing('flashing');
+});
+document.getElementById('fpAddRemove').addEventListener('click', () => {
+  if (fpPendingSticker === 'remove') { fpCancelPlacing(); return; }
+  fpStartPlacing('remove');
 });
 document.getElementById('fpClearBtn').addEventListener('click', () => {
   // confirm() is silently blocked inside sandboxed iframes (Claude Artifact
@@ -3639,6 +3660,7 @@ function fpDrawStickerToExportCanvas(ctx, s) {
       outdoor: `<rect x="14" y="8" width="32" height="44" rx="3" fill="#1e3a6e" stroke="#152a52" stroke-width="2"/><circle cx="30" cy="22" r="9" fill="none" stroke="#7fa8d8" stroke-width="2"/><circle cx="30" cy="22" r="3" fill="#7fa8d8"/><circle cx="30" cy="40" r="9" fill="none" stroke="#7fa8d8" stroke-width="2"/><circle cx="30" cy="40" r="3" fill="#7fa8d8"/>`,
       brick: `<rect x="4" y="8" width="24" height="20" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="2"/><rect x="32" y="8" width="24" height="20" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="2"/><rect x="4" y="32" width="24" height="20" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="2"/><rect x="32" y="32" width="24" height="20" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="2"/><line x1="4" y1="30" x2="56" y2="30" stroke="#8a3f18" stroke-width="2"/><line x1="30" y1="8" x2="30" y2="28" stroke="#8a3f18" stroke-width="2"/><line x1="30" y1="32" x2="30" y2="52" stroke="#8a3f18" stroke-width="2"/>`,
       flashing: `<rect x="8" y="22" width="44" height="32" rx="2" fill="#b03a2e" stroke="#7b1f15" stroke-width="1.5"/><rect x="10" y="24" width="40" height="28" rx="1.5" fill="none" stroke="#e88070" stroke-width="1" opacity="0.5"/><ellipse cx="30" cy="34" rx="13" ry="9" fill="#c0392b" stroke="#7b1f15" stroke-width="1"/><ellipse cx="30" cy="32" rx="10" ry="7" fill="#c0392b" stroke="#7b1f15" stroke-width="1"/><ellipse cx="30" cy="30" rx="7" ry="5" fill="#c0392b" stroke="#7b1f15" stroke-width="1"/><rect x="26" y="4" width="8" height="26" rx="3" fill="#d0ccc8" stroke="#999" stroke-width="1.5"/>`,
+      remove: `<rect x="4" y="12" width="52" height="36" rx="6" fill="#fff5f5" stroke="#c0392b" stroke-width="3"/><text x="30" y="37" font-size="15" font-weight="800" fill="#c0392b" text-anchor="middle" font-family="Arial, sans-serif" letter-spacing="0.5">REMOVE</text>`,
     };
     const body = svgBodies[s.type] || svgBodies.indoor;
     const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">${body}</svg>`;
