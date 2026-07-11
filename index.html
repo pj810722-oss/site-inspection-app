@@ -1,0 +1,3737 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>空調安裝現場評估 AC Installation Site Inspection</title>
+<style>
+  :root {
+    /* ── Brand palette ─────────────────────────────────────────────
+       Primary blue  : AUX Air Conditioner  #1A46A0 (royal blue)
+       Action green  : EcoCare Carbon       #3a8c3f (deep eco-green)
+       Background    : crisp white + very light blue-grey tint
+       Text          : deep navy (not pure black — warmer/softer)
+    ─────────────────────────────────────────────────────────────── */
+
+    /* Core surfaces */
+    --ink:         #0f1f3d;   /* deep navy — primary text */
+    --paper:       #f4f6fb;   /* very light blue-white — page background */
+    --panel:       #ffffff;   /* pure white — card surfaces */
+    --line:        #d0d8e8;   /* blue-tinted divider line */
+
+    /* AUX primary blue */
+    --accent:      #1a46a0;   /* AUX royal blue — nav, progress, key UI */
+    --accent-soft: #dde6f8;   /* light blue tint — hover backgrounds */
+    --accent-dark: #0f2d72;   /* darker blue — topbar, active states */
+    --accent-mid:  #2558c0;   /* mid blue — hover/pressed states */
+
+    /* EcoCare green — action/completion */
+    --green:       #3a8c3f;   /* EcoCare deep green — confirm buttons, done states */
+    --green-soft:  #e4f3e5;   /* light green tint */
+    --green-mid:   #4aaa50;   /* lighter green — hover */
+
+    /* Semantic: still needed for warnings and fees */
+    --warn:        #c0392b;   /* red warning (unchanged) */
+    --warn-soft:   #fbeaea;
+    --warn-line:   #edbbbb;
+    --muted:       #6b7a99;   /* blue-grey muted text — fits the navy palette */
+    --gold:        #b07d1a;   /* amber — manual/extra fee tags */
+    --gold-soft:   #fdf3d9;
+
+    --radius: 10px;
+    --mono: 'SF Mono', 'Consolas', monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    -webkit-tap-highlight-color: transparent;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  /* ---- Outer shell: floor plan (left) + questionnaire (right) ---- */
+  .shell {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+  }
+  .shell .fp-pane {
+    flex: 1 1 50%;
+    min-width: 0;
+    height: 100vh;
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+  }
+  .shell .qa-pane {
+    flex: 1 1 50%;
+    min-width: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  /* Below tablet width, stack: floor plan pins to top via sticky positioning
+     so it never scrolls out of view, even when results below it are long. */
+  @media (max-width: 880px) {
+    body { overflow: visible; height: auto; }
+    .shell {
+      flex-direction: column;
+      height: auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .shell .fp-pane {
+      height: 42vh;
+      flex: 0 0 auto;
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+    .shell .qa-pane {
+      flex: 0 0 auto;
+      height: auto;
+      overflow-y: visible;
+    }
+  }
+  .fp-collapsed .fp-pane { display: none; }
+  .fp-collapsed .qa-pane { flex: 1 1 100%; }
+
+  .app {
+    max-width: 640px;
+    margin: 0 auto;
+    min-height: 100%;
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---- Top bar ---- */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 14px 18px 14px;
+  }
+  .topbar .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .topbar .title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .topbar .backlink {
+    font-size: 13px;
+    color: #b9c4bd;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .topbar .overall {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .overall-track {
+    flex: 1;
+    height: 6px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .overall-fill {
+    height: 100%;
+    background: #5a89d4;
+    transition: width 0.25s ease;
+  }
+  .overall-pct {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: #cdd8d1;
+    min-width: 34px;
+    text-align: right;
+  }
+
+  /* ---- Hub (section list) ---- */
+  .hub-head {
+    padding: 20px 18px 4px;
+  }
+  .hub-head .h1 {
+    font-size: 21px;
+    font-weight: 800;
+  }
+  .hub-head .h2 {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .hub-list {
+    padding: 12px 18px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .hub-card {
+    background: var(--panel);
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: border-color 0.12s ease;
+  }
+  .hub-card:hover { border-color: var(--accent); }
+  .hub-card.complete { border-color: #b0c4e8; background: #f8faff; }
+  .hub-card.has-warn { border-color: var(--warn-line); }
+  .hub-ring {
+    flex: 0 0 46px;
+    width: 46px;
+    height: 46px;
+    position: relative;
+  }
+  .hub-ring svg { transform: rotate(-90deg); }
+  .hub-ring .pct-label {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .hub-body { flex: 1; min-width: 0; }
+  .hub-eyebrow {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--accent);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .hub-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 1px;
+  }
+  .hub-status {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .hub-status.warn-text { color: var(--warn); font-weight: 700; }
+  .hub-status.incomplete { color: var(--gold); font-weight: 600; }
+  .hub-chevron { color: var(--muted); font-size: 18px; flex: 0 0 auto; }
+
+  .finish-banner {
+    margin: 4px 18px 0;
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    background: var(--gold-soft);
+    border: 1.5px solid #e3cf99;
+    color: var(--gold);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .finish-banner.ready {
+    background: var(--green-soft);
+    border-color: #b0d8b2;
+    color: var(--green);
+  }
+  .finish-cta {
+    margin: 14px 18px 0;
+  }
+  .finish-cta button {
+    width: 100%;
+    padding: 15px;
+    border-radius: 10px;
+    border: none;
+    background: var(--green);
+    color: #fff;
+    font-size: 15.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .finish-cta button:disabled {
+    background: #c7c2b4;
+    cursor: not-allowed;
+  }
+
+  /* ---- Section header (inside a section) ---- */
+  .section-head {
+    padding: 14px 18px 6px;
+  }
+  .section-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .section-title {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 4px 0 2px;
+  }
+  .section-sub {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* ---- Jump strip: persistent section nav while filling out ---- */
+  .jump-strip {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 10px 14px 10px;
+    background: var(--ink);
+    scrollbar-width: none;
+  }
+  .jump-strip::-webkit-scrollbar { display: none; }
+  .jump-chip {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 11px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid transparent;
+    color: #cdd8d1;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .jump-chip .chip-pct {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    opacity: 0.8;
+  }
+  .jump-chip.active {
+    background: #5a89d4;
+    color: var(--ink);
+  }
+  .jump-chip.chip-complete:not(.active) {
+    border-color: rgba(127,184,159,0.5);
+    color: #90b8e8;
+  }
+  .jump-chip.chip-warn:not(.active) {
+    border-color: var(--warn-line);
+    color: #f0a9a2;
+  }
+  .jump-chip.chip-warn.active {
+    background: var(--warn);
+    color: #fff;
+  }
+
+  /* ---- Question card ---- */
+  .qlist {
+    padding: 10px 18px 100px;
+    flex: 1;
+  }
+  .qcard {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .qcard .qtext {
+    font-size: 15.5px;
+    font-weight: 600;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    white-space: pre-line;
+  }
+  .qcard .qhint {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: -8px;
+    margin-bottom: 12px;
+    line-height: 1.5;
+    white-space: pre-line;
+  }
+
+  .opts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .opt {
+    flex: 1 1 auto;
+    min-width: 86px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    font-size: 14.5px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    color: var(--ink);
+    transition: all 0.12s ease;
+    user-select: none;
+  }
+  .opt:hover { border-color: var(--accent); }
+  .opt.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .opt.warn-opt.selected {
+    background: var(--warn);
+    border-color: var(--warn);
+    color: #fff;
+  }
+  .opt.warn-opt:not(.selected) {
+    border-color: var(--warn-line);
+    color: var(--warn);
+  }
+  .opt.fee-opt:not(.selected) {
+    border-color: #d9c48a;
+  }
+
+  .qcard textarea, .qcard input[type=text], .qcard input[type=number], .qcard input[type=date], .qcard select {
+    width: 100%;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 11px 12px;
+    font-size: 14.5px;
+    font-family: inherit;
+    background: var(--paper);
+    resize: vertical;
+    color: var(--ink);
+  }
+  .qcard textarea:focus, .qcard input:focus, .qcard select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .field-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .field-row > div { flex: 1; }
+  .field-row label {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  .combo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .combo-opt {
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 11px 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .combo-opt:hover { border-color: var(--accent); }
+  .combo-opt.selected {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .combo-radio {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    flex: 0 0 auto;
+    position: relative;
+  }
+  .combo-opt.selected .combo-radio {
+    border-color: var(--accent);
+  }
+  .combo-opt.selected .combo-radio::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px; right: 3px; bottom: 3px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .combo-label { font-size: 14px; font-weight: 600; }
+  .combo-label .combo-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 400;
+    margin-right: 4px;
+  }
+
+  .photo-note {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--accent);
+    border: 1px dashed var(--accent-soft);
+    background: var(--accent-soft);
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .photo-upload {
+    margin-top: 10px;
+  }
+  .photo-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--accent);
+    border: 1.5px dashed #b0c4e8;
+    background: var(--accent-soft);
+    border-radius: 8px;
+    padding: 9px 13px;
+    cursor: pointer;
+  }
+  .photo-thumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .photo-thumb {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .photo-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .photo-thumb .remove-thumb {
+    position: absolute;
+    top: 2px; right: 2px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  /* ---- note_list: categorized multi-entry supplementary notes ---- */
+  .note-entries {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .note-entry {
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: var(--paper);
+  }
+  .note-entry-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-bottom: 6px;
+  }
+  .note-entry-tag.tag-sales { background: var(--gold-soft); color: var(--gold); }
+  .note-entry-tag.tag-install { background: var(--accent-soft); color: var(--accent); }
+  .note-entry-tag.tag-other { background: #e7e3f5; color: #5b4b9e; }
+  .note-entry-text { font-size: 14px; line-height: 1.5; }
+  .note-entry-remove {
+    float: right;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .note-draft-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .note-draft-row select {
+    flex: 0 0 118px;
+  }
+  .note-draft-row textarea {
+    flex: 1;
+    min-height: 44px;
+  }
+  .note-confirm-btn {
+    width: 100%;
+    padding: 11px;
+    border-radius: 8px;
+    border: 1.5px solid var(--green);
+    background: var(--green-soft);
+    color: var(--green);
+    font-weight: 700;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .note-confirm-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /* ---- fee_summary: full interactive list of all fee-bearing questions, grouped by section ---- */
+  .fee-question-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .fee-group {
+    margin-bottom: 4px;
+  }
+  .fee-group-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 14px 0 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  .fee-group:first-child .fee-group-label { margin-top: 0; }
+  .fee-question-groups .qcard {
+    margin-bottom: 10px;
+  }
+  .fee-manual-section {
+    margin-top: 6px;
+  }
+  .fee-summary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .fee-row {
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: var(--paper);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .fee-row-manual {
+    border-color: #d9c48a;
+    background: var(--gold-soft);
+  }
+  .fee-row-manual-tag {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--gold);
+    border: 1px solid #d9c48a;
+    border-radius: 10px;
+    padding: 2px 7px;
+    flex: 0 0 auto;
+  }
+  .fee-row-text {
+    flex: 1;
+    font-size: 14px;
+  }
+  .fee-row-remove {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .fee-empty-msg {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 14px;
+  }
+  .fee-add-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .fee-add-row input {
+    flex: 1;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    background: var(--paper);
+  }
+  .fee-add-row button {
+    flex: 0 0 auto;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    background: var(--green);
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .fee-add-row button:disabled {
+    background: #c7c2b4;
+    cursor: not-allowed;
+  }
+  .fee-total-line {
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  .qcard.flagged {
+    border-color: var(--warn-line);
+    background: var(--warn-soft);
+  }
+  .flag-banner {
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--warn);
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .fee-banner {
+    margin-top: 10px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--gold);
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .bottombar {
+    position: sticky;
+    bottom: 0;
+    background: var(--paper);
+    border-top: 1px solid var(--line);
+    padding: 12px 18px;
+    display: flex;
+    gap: 10px;
+  }
+  .btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 9px;
+    border: none;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-prev {
+    background: var(--panel);
+    border: 1.5px solid var(--line);
+    color: var(--ink);
+    flex: 0 0 110px;
+  }
+  .btn-next {
+    background: var(--green);
+    color: #fff;
+  }
+
+  /* ---- Results screen ---- */
+  .results { padding: 18px; }
+  .res-header { text-align: center; padding: 18px 0 10px; }
+  .res-header .big { font-size: 26px; font-weight: 800; }
+  .warn-summary {
+    background: var(--warn-soft);
+    border: 1.5px solid var(--warn-line);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .warn-summary h3 {
+    color: var(--warn);
+    font-size: 15px;
+    margin: 0 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .warn-summary ul { margin: 0; padding-left: 20px; }
+  .warn-summary li { font-size: 14px; margin-bottom: 4px; color: #6e1b16; }
+  .fee-summary {
+    background: var(--gold-soft);
+    border: 1.5px solid #e3cf99;
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 18px;
+  }
+  .fee-summary h3 {
+    color: var(--gold);
+    font-size: 15px;
+    margin: 0 0 8px;
+  }
+  .fee-summary ul { margin: 0; padding-left: 20px; }
+  .fee-summary li { font-size: 14px; margin-bottom: 4px; color: #6b4c14; }
+
+  .wechat-box {
+    background: var(--panel);
+    border: 1.5px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 18px;
+  }
+  .wechat-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .wechat-head h3 {
+    margin: 0;
+    font-size: 15px;
+    color: var(--accent);
+  }
+  .wechat-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .lang-toggle {
+    display: flex;
+    border: 1.5px solid var(--line);
+    border-radius: 7px;
+    overflow: hidden;
+  }
+  .lang-toggle-btn {
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 6px 11px;
+    border: none;
+    background: var(--paper);
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .lang-toggle-btn.active {
+    background: var(--accent);
+    color: #fff;
+  }
+  .regen-btn {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 5px 9px;
+    cursor: pointer;
+  }
+  .wechat-textarea {
+    width: 100%;
+    min-height: 320px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--ink);
+    background: var(--paper);
+    resize: vertical;
+    white-space: pre-wrap;
+  }
+  .wechat-textarea:focus { outline: none; border-color: var(--accent); }
+  .copy-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 13px;
+    border-radius: 8px;
+    border: none;
+    background: var(--green);
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .copy-confirm {
+    text-align: center;
+    color: var(--accent);
+    font-size: 12.5px;
+    font-weight: 700;
+    margin-top: 8px;
+  }
+  .res-divider {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: center;
+    margin: 22px 0 12px;
+    position: relative;
+  }
+  .res-divider::before, .res-divider::after {
+    content: '';
+    display: inline-block;
+    width: 40px;
+    height: 1px;
+    background: var(--line);
+    vertical-align: middle;
+    margin: 0 8px;
+  }
+
+  .ok-banner {
+    background: var(--green-soft);
+    border: 1.5px solid #b0d8b2;
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    color: var(--green);
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .res-section { margin-bottom: 16px; }
+  .res-section h4 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+  }
+  .res-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 13.5px;
+    padding: 5px 0;
+    border-bottom: 1px dashed #e6e2d6;
+  }
+  .res-row .k { color: var(--muted); flex: 1.3; }
+  .res-row .v { font-weight: 600; text-align: right; flex: 1; }
+  .res-row .v.flagval { color: var(--warn); }
+  .restart-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 14px;
+    border-radius: 9px;
+    border: 1.5px solid var(--line);
+    background: var(--panel);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .back-to-hub-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 14px;
+    border-radius: 9px;
+    border: 1.5px solid var(--line);
+    background: var(--panel);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  /* ================= Floor plan annotation panel ================= */
+  .fp-topbar {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 0 0 auto;
+  }
+  .fp-topbar .fp-title { font-size: 13.5px; font-weight: 700; }
+  .fp-topbar .fp-actions { display: flex; gap: 6px; }
+  .fp-topbar button {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 7px;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.08);
+    color: var(--paper);
+    cursor: pointer;
+  }
+  #fpFullscreenBtn {
+    font-size: 15px;
+    padding: 6px 10px;
+    border-radius: 7px;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  /* Fullscreen mode: fp-pane covers the entire viewport */
+  .fp-fullscreen .fp-pane {
+    position: fixed !important;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 200;
+    flex: none !important;
+    border: none !important;
+  }
+  .fp-fullscreen .qa-pane {
+    display: none;
+  }
+
+  .fp-collapse-btn {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 7px;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+  }
+  .fp-expand-btn {
+    position: fixed;
+    bottom: 18px;
+    left: 18px;
+    z-index: 60;
+    padding: 11px 16px;
+    border-radius: 24px;
+    border: none;
+    background: var(--ink);
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    cursor: pointer;
+    display: none;
+  }
+  .fp-collapsed .fp-expand-btn { display: block; }
+
+  /* ---- Draw toolbar: mode toggle + color/eraser/undo tools ---- */
+  .fp-drawbar {
+    flex: 0 0 auto;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .fp-mode-btn {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .fp-mode-btn[data-active="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .fp-drawbar-tools {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .fp-color-btn {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 2.5px solid var(--line);
+    cursor: pointer;
+    padding: 0;
+  }
+  .fp-color-btn[data-active="true"] {
+    border-color: var(--ink);
+    box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--ink);
+  }
+  .fp-tool-btn {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: 1.5px solid var(--line);
+    background: var(--paper);
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fp-tool-btn[data-active="true"] {
+    background: var(--warn-soft);
+    border-color: var(--warn-line);
+  }
+
+  .fp-draw-canvas {
+    position: absolute;
+    top: 0; left: 0;
+    touch-action: none;
+  }
+
+  .fp-body {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+  }
+  @media (max-width: 880px) {
+    .fp-body { flex-direction: row; }
+  }
+  .fp-canvas-wrap {
+    flex: 1;
+    position: relative;
+    overflow: auto;
+    background:
+      linear-gradient(0deg, transparent 24px, rgba(0,0,0,0.04) 25px),
+      linear-gradient(90deg, transparent 24px, rgba(0,0,0,0.04) 25px);
+    background-size: 25px 25px;
+    background-color: #e8edf5;
+    touch-action: pan-x pan-y;
+  }
+  .fp-canvas {
+    position: relative;
+    /* width/height set dynamically in JS — sized to match the uploaded photo
+       exactly (or a modest default before any photo is uploaded), instead of
+       a fixed 1400x1000 canvas that was far larger than needed and caused
+       lag/crashes on iPad regardless of what was actually being drawn on it. */
+    width: 900px;
+    height: 650px;
+    transform-origin: 0 0;
+  }
+  .fp-canvas.fp-zoom-animated {
+    transition: transform 0.08s ease-out;
+  }
+  .fp-zoom-controls {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(255,255,255,0.92);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .fp-zoom-controls button {
+    width: 36px; height: 36px;
+    border-radius: 7px;
+    border: 1.5px solid var(--line);
+    background: var(--panel);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fp-zoom-pct {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    padding: 2px 0;
+  }
+  .fp-canvas-empty {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    text-align: right;
+    color: var(--muted);
+    background: rgba(255,255,255,0.85);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    line-height: 1.5;
+    pointer-events: none;
+    max-width: 200px;
+  }
+  .fp-canvas-empty .fp-icon { display: none; }
+  .fp-canvas-empty button {
+    margin-top: 8px;
+    padding: 7px 12px;
+    border-radius: 7px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    pointer-events: auto;
+    display: block;
+    width: 100%;
+  }
+  .fp-bg-image {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    user-select: none;
+    pointer-events: none;
+  }
+  .fp-tray {
+    flex: 0 0 130px;
+    background: var(--panel);
+    border-left: 1px solid var(--line);
+    padding: 10px;
+    overflow-y: auto;
+  }
+  .fp-tray-label {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .fp-tray-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    width: 100%;
+    padding: 8px 6px;
+    border-radius: 8px;
+    border: 1.5px solid var(--line);
+    background: var(--paper);
+    cursor: pointer;
+    margin-bottom: 8px;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ink);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .fp-tray-btn svg { width: 28px; height: 28px; }
+  /* Placement mode: tray button glows to show it's selected */
+  .fp-tray-btn.fp-placing {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+  /* Placement mode: canvas shows crosshair cursor */
+  .fp-canvas-placing {
+    cursor: crosshair !important;
+  }
+  .fp-upload-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    padding: 9px 4px;
+    border-radius: 8px;
+    border: 1.5px dashed #b0c4e8;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 10.5px;
+    cursor: pointer;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .fp-sticker {
+    position: absolute;
+    touch-action: none;
+    cursor: grab;
+    user-select: none;
+  }
+  .fp-sticker.dragging { cursor: grabbing; z-index: 50; }
+  .fp-sticker.selected .fp-sticker-ring {
+    outline: 3px dashed var(--accent);
+    outline-offset: 6px;
+  }
+  .fp-sticker-inner {
+    width: 100%;
+    height: 100%;
+    transform-origin: center center;
+  }
+  .fp-rotate-handle {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    width: 38px;
+    height: 38px;
+    margin-left: -19px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    cursor: grab;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    touch-action: none;
+    z-index: 51;
+  }
+  .fp-rotate-handle.rotating { cursor: grabbing; background: #0f2d72; }
+  .fp-rotate-handle::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: 2px;
+    height: 18px;
+    background: var(--accent);
+    transform: translateX(-1px);
+  }
+  .fp-delete-handle {
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--warn);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    z-index: 51;
+  }
+  .fp-room-label {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid #d63b2f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 24px;
+    color: #d63b2f;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+  .fp-room-stepper {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--ink);
+    border-radius: 18px;
+    padding: 4px;
+    z-index: 51;
+    white-space: nowrap;
+  }
+  .fp-room-stepper button {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ---- Export modal: shows the composited image on-page for long-press save ---- */
+  /* ---- Inline clear confirmation (replaces confirm() which is blocked in sandboxed iframe) ---- */
+  .fp-clear-confirm {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--warn-soft);
+    border: 1.5px solid var(--warn-line);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 50;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--warn);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+  .fp-clear-confirm button {
+    padding: 6px 12px;
+    border-radius: 7px;
+    border: none;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  #fpClearYes { background: var(--warn); color: #fff; }
+  #fpClearNo  { background: var(--paper); color: var(--ink); border: 1px solid var(--line); }
+
+  /* ---- Text annotation tool ---- */
+  .fp-text-input-overlay {
+    position: absolute;
+    background: rgba(255,255,255,0.95);
+    border: 2px solid var(--accent);
+    border-radius: 7px;
+    padding: 4px 8px;
+    font-size: 15px;
+    font-family: -apple-system, "PingFang TC", sans-serif;
+    color: var(--ink);
+    min-width: 80px;
+    outline: none;
+    z-index: 40;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .fp-export-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.88);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .fp-export-modal-inner {
+    background: var(--panel);
+    border-radius: 14px;
+    max-width: 92vw;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .fp-export-modal-head {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .fp-export-modal-head button {
+    flex: 0 0 auto;
+    padding: 7px 12px;
+    border-radius: 7px;
+    border: 1.5px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .fp-export-modal-imgwrap {
+    overflow: auto;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fp-export-modal-imgwrap img {
+    max-width: 100%;
+    max-height: 78vh;
+    display: block;
+    border: 1px solid var(--line);
+  }
+</style>
+</head>
+<body>
+<div class="shell" id="shell">
+  <div class="fp-pane" id="fpPane">
+    <div class="fp-topbar">
+      <div class="fp-title">📐 平面圖標註 Floor Plan</div>
+      <div class="fp-actions">
+        <button id="fpExportBtn">💾 存到相簿 Save</button>
+        <button id="fpFullscreenBtn" title="全螢幕 Fullscreen">⛶</button>
+        <button id="fpClearBtn">清空 Clear</button>
+        <button class="fp-collapse-btn" id="fpCollapseBtn">收合 Collapse ‹</button>
+      </div>
+    </div>
+    <div class="fp-drawbar" id="fpDrawbar">
+      <button class="fp-mode-btn" id="fpModeMove" data-active="true">✋ 移動 Move</button>
+      <button class="fp-mode-btn" id="fpModeDraw">✏️ 畫筆 Draw</button>
+      <div class="fp-drawbar-tools" id="fpDrawTools" style="display:none;">
+        <button class="fp-color-btn" data-color="#1e3a6e" style="background:#1e3a6e" title="深藍 Dark Blue"></button>
+        <button class="fp-color-btn" data-color="#d63b2f" style="background:#d63b2f" title="紅 Red"></button>
+        <button class="fp-color-btn" data-color="#e8941a" style="background:#e8941a" title="橘黃 Orange"></button>
+        <button class="fp-tool-btn" id="fpTextBtn" title="文字標註 Text">T</button>
+        <button class="fp-tool-btn" id="fpLineBtn" title="直線 Line">╱</button>
+        <button class="fp-tool-btn" id="fpRectBtn" title="方形 Rectangle">▭</button>
+        <button class="fp-tool-btn" id="fpEraserBtn" title="橡皮擦 Eraser">🧹</button>
+        <button class="fp-tool-btn" id="fpUndoBtn" title="撤銷 Undo">↩</button>
+      </div>
+    </div>
+    <div class="fp-body">
+      <div class="fp-canvas-wrap" id="fpCanvasWrap">
+        <div class="fp-canvas" id="fpCanvas">
+          <div id="fpBgLayer"></div>
+          <canvas class="fp-draw-canvas" id="fpDrawCanvas" width="900" height="650"></canvas>
+          <div id="fpStickerLayer"></div>
+        </div>
+        <div class="fp-zoom-controls">
+          <button id="fpZoomIn">＋</button>
+          <div class="fp-zoom-pct" id="fpZoomPct">100%</div>
+          <button id="fpZoomOut">－</button>
+          <button id="fpZoomReset" title="重置 Reset">⟲</button>
+        </div>
+      </div>
+      <div class="fp-tray">
+        <div class="fp-tray-label">底圖 Background</div>
+        <label class="fp-upload-btn">
+          📷 上傳底圖 Upload
+          <input type="file" accept="image/*" id="fpBgUpload" style="display:none">
+        </label>
+        <div class="fp-tray-label">貼圖 Stickers</div>
+        <div class="fp-tray-btn" id="fpAddIndoor">
+          <svg viewBox="0 0 60 60"><use href="#icon-indoor"/></svg>
+          內機 Indoor
+        </div>
+        <div class="fp-tray-btn" id="fpAddOutdoor">
+          <svg viewBox="0 0 60 60"><use href="#icon-outdoor"/></svg>
+          外機 Outdoor
+        </div>
+        <div class="fp-tray-btn" id="fpAddRoom">
+          <svg viewBox="0 0 60 60"><use href="#icon-room"/></svg>
+          房間 Room
+        </div>
+        <div class="fp-tray-btn" id="fpAddBrick">
+          <svg viewBox="0 0 60 60"><use href="#icon-brick"/></svg>
+          雙磚 Brick
+        </div>
+        <div class="fp-tray-btn" id="fpAddFlashing">
+          <svg viewBox="0 0 60 60"><use href="#icon-flashing"/></svg>
+          防水瓦 Flashing
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="qa-pane" id="qaPane">
+    <div class="app" id="app"></div>
+  </div>
+</div>
+<button class="fp-expand-btn" id="fpExpandBtn">📐 顯示平面圖 Show Floor Plan</button>
+
+<!-- SVG icon defs for floor plan stickers -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <g id="icon-indoor">
+      <rect x="4" y="20" width="52" height="18" rx="4" fill="#7fc4e8" stroke="#4a9bc4" stroke-width="2"/>
+      <rect x="8" y="25" width="44" height="3" fill="#ffffff" opacity="0.7"/>
+      <rect x="8" y="30" width="30" height="2.5" fill="#4a9bc4" opacity="0.6"/>
+      <circle cx="48" cy="29" r="2" fill="#1a46a0"/>
+    </g>
+    <g id="icon-outdoor">
+      <rect x="14" y="8" width="32" height="44" rx="3" fill="#1e3a6e" stroke="#152a52" stroke-width="2"/>
+      <circle cx="30" cy="22" r="9" fill="none" stroke="#7fa8d8" stroke-width="2"/>
+      <circle cx="30" cy="22" r="3" fill="#7fa8d8"/>
+      <circle cx="30" cy="40" r="9" fill="none" stroke="#7fa8d8" stroke-width="2"/>
+      <circle cx="30" cy="40" r="3" fill="#7fa8d8"/>
+    </g>
+    <g id="icon-room">
+      <circle cx="30" cy="30" r="26" fill="#ffffff" stroke="#d63b2f" stroke-width="3"/>
+      <text x="30" y="38" font-size="22" font-weight="800" fill="#d63b2f" text-anchor="middle" font-family="sans-serif">#</text>
+    </g>
+    <!-- 雙磚塊 Double Brick -->
+    <g id="icon-brick">
+      <!-- bottom row: two bricks -->
+      <rect x="4"  y="34" width="24" height="13" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/>
+      <rect x="32" y="34" width="24" height="13" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/>
+      <!-- top row: offset brick spanning centre -->
+      <rect x="4"  y="18" width="11" height="13" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/>
+      <rect x="19" y="18" width="24" height="13" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/>
+      <rect x="47" y="18" width="9"  height="13" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/>
+      <!-- mortar highlight lines -->
+      <line x1="4" y1="33" x2="56" y2="33" stroke="#8a3f18" stroke-width="1.5"/>
+      <line x1="30" y1="34" x2="30" y2="47" stroke="#8a3f18" stroke-width="1.5"/>
+    </g>
+    <!-- 防水瓦 Roof Pipe Flashing -->
+    <g id="icon-flashing">
+      <!-- square base plate -->
+      <rect x="8" y="22" width="44" height="32" rx="2" fill="#b03a2e" stroke="#7b1f15" stroke-width="1.5"/>
+      <!-- metal flange highlight -->
+      <rect x="10" y="24" width="40" height="28" rx="1.5" fill="none" stroke="#e88070" stroke-width="1" opacity="0.5"/>
+      <!-- concentric rings (boot) -->
+      <ellipse cx="30" cy="34" rx="13" ry="9"  fill="#c0392b" stroke="#7b1f15" stroke-width="1"/>
+      <ellipse cx="30" cy="32" rx="10" ry="7"  fill="#c0392b" stroke="#7b1f15" stroke-width="1"/>
+      <ellipse cx="30" cy="30" rx="7"  ry="5"  fill="#c0392b" stroke="#7b1f15" stroke-width="1"/>
+      <!-- pipe coming through -->
+      <rect x="26" y="4" width="8" height="26" rx="3" fill="#d0ccc8" stroke="#999" stroke-width="1.5"/>
+    </g>
+  </defs>
+</svg>
+
+<script>
+/* =======================================================================
+   問卷資料結構 (Day 1 - v2)
+   調整項目: 月曆日期 / mini switch計費 / 一拖N吓力分配組合 / 首頁大項導覽
+   完成度% / 雙層房間數下拉 / 移除舊機台數
+========================================================================= */
+
+const HP_COMBOS = {
+  "4": [
+    { key: "A", label: "8.1 + 5.6 + 3.6×2", parts: "8.1+5.6+3.6+3.6" }
+  ],
+  "5": [
+    { key: "A", label: "7.1 + 4.5 + 2.8×3", parts: "7.1+4.5+2.8+2.8+2.8" },
+    { key: "B", label: "8.1 + 5.7 + 2.8×3", parts: "8.1+5.7+2.8+2.8+2.8" },
+  ],
+  "6": [
+    { key: "A", label: "3.6×3 + 2.8×3", parts: "3.6+3.6+3.6+2.8+2.8+2.8" },
+    { key: "B", label: "7.1 + 4.5 + 2.8×3", parts: "7.1+4.5+2.8+2.8+2.8" },
+    { key: "C", label: "4 + 4.5 + 2.8×4", parts: "4+4.5+2.8+2.8+2.8+2.8" },
+  ]
+};
+
+const SECTIONS = [
+  {
+    key: "basic",
+    title: "基本資料 Basic Info",
+    eyebrow: "Section 0",
+    sub: "客戶與地址資訊 Customer & Address",
+    questions: [
+      { id: "customer_name", type: "text", label: "客戶名 Customer Name", optional: true },
+      { id: "address", type: "text", label: "地址 Address" },
+      { id: "inspect_date", type: "date", label: "評估日期 Inspection Date", optional: true },
+      { id: "basic_note", type: "note_list", text: "補充說明 Additional Notes", hint: "可上傳照片 Photo upload available" },
+    ]
+  },
+  {
+    key: "panel",
+    title: "電箱 Switchboard",
+    eyebrow: "Section 1",
+    sub: "電源容量、位置與空間 Capacity, location & space",
+    questions: [
+      {
+        id: "panel_capacity",
+        text: "電箱容量 Switchboard Capacity",
+        options: [
+          { v: "32A", label: "32A" },
+          { v: "40A+", label: "40A以上 40A or above" },
+          { v: "不足", label: "不足，需升級電箱 Insufficient, needs upgrade", warn: true },
+        ],
+        salesNoteIf: "不足",
+        salesNoteText: "需與等待師傅確認電箱升級費用 Need to confirm switchboard upgrade cost with technician"
+      },
+      {
+        id: "panel_location",
+        feeQuestion: true,
+        text: "電箱地理位置 Switchboard Location",
+        options: [
+          { v: "房外", label: "正常(房外) Normal (outside)" },
+          { v: "房內", label: "房內 Inside the house" },
+        ],
+        noteIf: "房內",
+        notePrompt: "房內位置說明（會產生附加費） Indoor location notes (extra fee applies)",
+        feeIf: "房內",
+        feeText: "拉線費 ×1 Cabling fee ×1"
+      },
+      {
+        id: "panel_space",
+        feeQuestion: true,
+        text: "電箱空間 Switchboard Space",
+        options: [
+          { v: "足夠", label: "足夠 Sufficient" },
+          { v: "需加mini switch", label: "需加mini switch（固定2個） Needs mini switch (fixed 2 units)", fee: true },
+        ],
+        feeIf: "需加mini switch",
+        feeText: "Mini switch ×2"
+      },
+      { id: "panel_note", type: "note_list", text: "補充說明 Additional Notes", hint: "可上傳照片 Photo upload available" },
+    ]
+  },
+  {
+    key: "indoor",
+    title: "內機位置 Indoor Unit",
+    eyebrow: "Section 2",
+    sub: "室內機數量、樓層、排水 Unit count, floors, drainage",
+    questions: [
+      {
+        id: "indoor_count",
+        text: "一拖幾 Number of Indoor Units",
+        options: [
+          { v: "4", label: "4台 4 units" },
+          { v: "5", label: "5台 5 units" },
+          { v: "6", label: "6台 6 units" },
+        ]
+      },
+      {
+        id: "system_type",
+        text: "機型 System Type",
+        options: [
+          { v: "VRF", label: "VRF" },
+          { v: "Multi", label: "Multi" },
+          { v: "其他", label: "其他 Other" },
+        ],
+        noteIf: "其他",
+        notePrompt: "請輸入機型名稱 Please enter system type name"
+      },
+      {
+        id: "hp_combo",
+        type: "hp_combo",
+        text: "空調組合 AC Unit Combination",
+        hint: "依照「一拖幾」自動列出常用組合，也可選擇自訂手動輸入 Auto-listed based on unit count, or enter custom combination",
+        dependsOn: "indoor_count"
+      },
+      {
+        id: "double_storey",
+        feeQuestion: true,
+        text: "雙層房：樓下房間三間（含）以上？ Two-storey: 3+ rooms downstairs?",
+        hint: "此題同時影響內機與屋頂施工計費，僅需填寫一次。拉管費計算：3間=1個，每多1間+1個 Affects both indoor unit & roof fees, only needs answering once. Pipe fee: 3 rooms=1 unit, +1 per extra room",
+        options: [
+          { v: "是", label: "是 Yes", fee: true },
+          { v: "否", label: "否 No" },
+        ],
+        dropdownIf: "是",
+        dropdownLabel: "樓下房間數 Downstairs room count",
+        dropdownOptions: ["3間 3 rooms", "4間 4 rooms", "5間 5 rooms", "6間 6 rooms", "7間 7 rooms", "8間以上 8+ rooms"],
+        feeIf: "是",
+        feeTextFn: (count, dropdownVal) => {
+          const match = (dropdownVal || '3間').match(/^(\d+)/);
+          const n = match ? parseInt(match[1], 10) : 3;
+          const pipes = Math.max(1, n - 2);
+          return `拉管費 ×${pipes} Pipe fee ×${pipes}`;
+        }
+      },
+      {
+        id: "remove_old_indoor",
+        feeQuestion: true,
+        text: "需移除舊機？ Remove old unit?",
+        options: [
+          { v: "是", label: "是 Yes", fee: true },
+          { v: "否", label: "否 No" },
+        ],
+        countIf: "是",
+        countLabel: "移除舊機台數 Number of units to remove",
+        countDefault: "1",
+        feeIf: "是",
+        feeTextFn: (count) => `拆機費 ×${count || 1} Removal fee ×${count || 1}`
+      },
+      {
+        id: "drainage_ok",
+        feeQuestion: true,
+        text: "內機排水正常？ Indoor unit drainage OK?",
+        options: [
+          { v: "是", label: "是 Yes" },
+          { v: "否", label: "否，需水泵 No, needs pump", fee: true },
+        ],
+        countIf: "否",
+        countLabel: "需水泵數量 Number of pumps needed",
+        countDefault: "1",
+        feeIf: "否",
+        feeTextFn: (count) => `水泵 ×${count || 1} Pump ×${count || 1}`
+      },
+      {
+        id: "house_height",
+        feeQuestion: true,
+        text: "房子高度 House Height",
+        options: [
+          { v: "正常", label: "正常 Normal" },
+          { v: "高天花", label: "高天花 High ceiling", fee: true },
+        ],
+        dropdownIf: "高天花",
+        dropdownLabel: "幾個 How many",
+        dropdownOptions: ["1個 1 unit", "2個 2 units", "3個 3 units", "4個 4 units", "5個以上 5+ units"],
+        feeIf: "高天花",
+        feeTextFn: (count, dropdownVal) => `高天花費 ×${(dropdownVal||'1個').match(/^\d+/)?.[0]||1} High ceiling fee ×${(dropdownVal||'1 unit').match(/\d+/)?.[0]||1}`
+      },
+      {
+        id: "brick_concrete",
+        feeQuestion: true,
+        text: "雙磚房 / 混凝土？ Double brick / concrete?",
+        options: [
+          { v: "是", label: "是 Yes", fee: true },
+          { v: "否", label: "否 No" },
+        ],
+        dropdownIf: "是",
+        dropdownLabel: "幾間 How many rooms",
+        dropdownOptions: ["1間 1 room", "2間 2 rooms", "3間 3 rooms", "4間 4 rooms", "5間以上 5+ rooms"],
+        feeIf: "是",
+        feeTextFn: (count, dropdownVal) => `雙磚房/混凝土 ×${(dropdownVal||'1間').match(/^\d+/)?.[0]||1} Double brick/concrete ×${(dropdownVal||'1 room').match(/^\d+/)?.[0]||1}`
+      },
+      {
+        id: "height_fee",
+        feeQuestion: true,
+        text: "高空費（二樓以上空間安裝） Height fee (2nd floor+ installation)",
+        options: [
+          { v: "是", label: "是，需計算 Yes, needs calculation", fee: true },
+          { v: "否", label: "否 No" },
+        ],
+        dropdownIf: "是",
+        dropdownLabel: "幾個 How many",
+        dropdownOptions: ["1個 1 unit", "2個 2 units", "3個 3 units", "4個 4 units", "5個以上 5+ units"],
+        feeIf: "是",
+        feeTextFn: (count, dropdownVal) => `高空費 ×${(dropdownVal||'1個').match(/^\d+/)?.[0]||1} Height fee ×${(dropdownVal||'1 unit').match(/^\d+/)?.[0]||1}`
+      },
+      { id: "indoor_note", type: "note_list", text: "補充說明 Additional Notes", hint: "可上傳照片 Photo upload available" },
+    ]
+  },
+  {
+    key: "gasheater",
+    title: "Gas Heater",
+    eyebrow: "Section 3",
+    sub: "放置位置與機況 Location & condition",
+    questions: [
+      {
+        id: "gh_location",
+        text: "放置位置 Location",
+        options: [
+          { v: "屋頂", label: "屋頂 Roof" },
+          { v: "後院", label: "後院 Backyard" },
+          { v: "無", label: "無 None", warn: true },
+        ]
+      },
+      {
+        id: "gh_remove_old",
+        feeQuestion: true,
+        text: "需移除舊機？ Remove old unit?",
+        options: [
+          { v: "是", label: "是 Yes", fee: true },
+          { v: "否", label: "否 No" },
+        ],
+        countIf: "是",
+        countLabel: "移除舊機台數 Number of units to remove",
+        countDefault: "1",
+        feeIf: "是",
+        feeTextFn: (count) => `舊機移除費 ×${count || 1} Remove old unit ×${count || 1}`
+      },
+      {
+        id: "gh_condition",
+        text: "機器使用正常？ Unit working normally?",
+        options: [
+          { v: "是", label: "是 Yes" },
+          { v: "否", label: "否，需回報 No, needs follow-up", note: true },
+        ]
+      },
+      { id: "gasheater_note", type: "note_list", text: "補充說明 Additional Notes", hint: "可上傳照片 Photo upload available" },
+    ]
+  },
+  {
+    key: "roofcavity",
+    title: "屋頂夾層 Roof Space",
+    eyebrow: "Section 4",
+    sub: "施工空間與其他狀況 Installation space & other conditions",
+    questions: [
+      {
+        id: "roof_cavity_space",
+        text: "師傅施工空間足夠？ Enough space for installer?",
+        hint: "有出風口即視為足夠 Sufficient if vent opening exists",
+        options: [
+          { v: "是", label: "是 Yes" },
+          { v: "否", label: "否 No", warn: true },
+        ]
+      },
+      {
+        id: "roof_cavity_other",
+        type: "note_list",
+        text: "其他問題 Other Issues",
+        hint: "可上傳照片 Photo upload available",
+      },
+    ]
+  },
+  {
+    key: "outdoor",
+    title: "外機 Outdoor Unit",
+    eyebrow: "Section 5",
+    sub: "搬運空間與放置位置 Transport space & placement",
+    questions: [
+      {
+        id: "outdoor_carry_space",
+        feeQuestion: true,
+        type: "select",
+        text: "足夠空間搬運？ Enough space to carry unit?",
+        options: [
+          { v: "足夠", label: "足夠 Sufficient" },
+          { v: "不足夠", label: "不足夠 Insufficient", warn: true },
+          { v: "有樓梯", label: "有樓梯，需加搬運費 Has stairs, extra carry fee", fee: true },
+          { v: "室內搬運", label: "室內搬運費 Indoor transport fee", fee: true },
+        ],
+        photo: true,
+        feeIf: "有樓梯",
+        feeText: "樓梯搬運費 ×1 Stair carry fee ×1",
+        feeIf2: "室內搬運",
+        feeText2: "室內搬運費 ×1 Indoor transport fee ×1"
+      },
+      {
+        id: "outdoor_placement_space",
+        text: "放置位置：空間大小確認 Placement: space size check",
+        hint: "標準：寬200 深100 高230 ｜ 機器：寬120(+80) 深60(+40) 高(+60) Standard: W200 D100 H230 | Unit: W120(+80) D60(+40) H(+60)",
+        options: [
+          { v: "是", label: "是，空間足夠 Yes, sufficient space" },
+          { v: "無", label: "無放置空間 No placement space", warn: true },
+          { v: "客戶未決定", label: "客戶未決定 Customer undecided" },
+        ],
+        photo: true
+      },
+      {
+        id: "outdoor_placement_notes",
+        text: "放置位置：注意事項 Placement: things to note",
+        options: [
+          { v: "無", label: "無 None" },
+          { v: "移除雜物", label: "需移除雜物 Needs debris removed" },
+          { v: "清理雜草", label: "需清理雜草 Needs weeds cleared" },
+          { v: "其他", label: "其他 Other" },
+        ],
+        noteIf: "其他",
+        notePrompt: "其他注意事項說明 Other notes description",
+        salesNoteFn: (selected, noteVal) => {
+          if (selected === "移除雜物") return "提醒客戶: 外機位置須移除雜物 Remind customer: debris must be removed from outdoor unit location";
+          if (selected === "清理雜草") return "提醒客戶: 外機位置須清除雜草 Remind customer: weeds must be cleared from outdoor unit location";
+          if (selected === "其他" && noteVal) return noteVal;
+          return null;
+        }
+      },
+      {
+        id: "outdoor_photo",
+        type: "note_list",
+        text: "補充說明 Additional Notes",
+        hint: "可上傳照片 Photo upload available",
+      },
+    ]
+  },
+  {
+    key: "exterior",
+    title: "房子外觀 House Exterior",
+    eyebrow: "Section 6",
+    sub: "屋頂材質與通行條件 Roof material & access",
+    questions: [
+      {
+        id: "roof_material",
+        feeQuestion: true,
+        text: "屋頂材質 Roof Material",
+        options: [
+          { v: "瓦片", label: "瓦片 Tile" },
+          { v: "塑膠鐵皮", label: "塑膠/鐵皮 Plastic/Tin", fee: true },
+          { v: "平頂鐵皮", label: "平頂鐵皮 Flat tin roof", warn: true },
+          { v: "其他", label: "其他 Other" },
+        ],
+        noteIf: "其他",
+        notePrompt: "屋頂材質說明 Roof material description",
+        dropdownIf: "塑膠鐵皮",
+        dropdownLabel: "鐵皮費/塑膠費 — 幾間 Tin/plastic fee — how many rooms",
+        dropdownOptions: ["1間 1 room", "2間 2 rooms", "3間 3 rooms", "4間 4 rooms"],
+        feeIf: "塑膠鐵皮",
+        feeTextFn: (count, dropdownVal) => `鐵皮費 ×${(dropdownVal||'1間').match(/^\d+/)?.[0]||1} Tin/plastic fee ×${(dropdownVal||'1 room').match(/^\d+/)?.[0]||1}`
+      },
+      {
+        id: "ladder_space",
+        text: "架梯子空間（大於100公分） Ladder space (over 100cm)",
+        options: [
+          { v: "是", label: "是 Yes" },
+          { v: "無", label: "無 None", warn: true },
+        ]
+      },
+      {
+        id: "roof_access",
+        feeQuestion: true,
+        text: "房子屋頂空間通行 Roof access",
+        options: [
+          { v: "是", label: "是 Yes" },
+          { v: "否拉明管", label: "否，會拉明管 No, will run exposed piping", note: true },
+          { v: "需穿瓦費", label: "需穿瓦費 Needs tile penetration fee", fee: true },
+        ],
+        dropdownIf: "需穿瓦費",
+        dropdownLabel: "穿瓦費 — 幾個 Tile penetration fee — how many",
+        dropdownOptions: ["1個 1 unit", "2個 2 units", "3個 3 units", "4個 4 units", "5個以上 5+ units"],
+        feeIf: "需穿瓦費",
+        feeTextFn: (count, dropdownVal) => `防水瓦 ×${(dropdownVal||'1個').match(/^\d+/)?.[0]||1} Waterproof tile ×${(dropdownVal||'1 unit').match(/^\d+/)?.[0]||1}`
+      },
+      { id: "exterior_note", type: "note_list", text: "補充說明 Additional Notes", hint: "可上傳照片 Photo upload available" },
+    ]
+  },
+  {
+    key: "extrafees",
+    title: "附加費用總覽 Extra Fees Overview",
+    eyebrow: "Section 7",
+    sub: "彙整所有區塊產生的費用，可勾選排除或手動新增 Aggregates fees from all sections; exclude or add manually",
+    questions: [
+      {
+        id: "fee_overview",
+        type: "fee_summary",
+        text: "費用總覽 Fee Overview",
+        hint: "自動列出前面所有區塊產生的費用，可取消勾選排除某一筆，也能手動新增項目 Auto-collected from all sections above; uncheck to exclude, or add your own",
+      },
+      {
+        id: "other_issues",
+        type: "note_list",
+        text: "其他問題 Other Issues",
+        hint: "可上傳照片 Photo upload available",
+      },
+    ]
+  },
+];
+
+let state = {
+  view: "hub",        // hub | section | results
+  currentSection: null,
+  answers: {},
+  follow: {},          // notes, custom hp text
+  counts: {},          // count fields
+  dropdowns: {},        // dropdown fields (room count etc)
+  hpCustom: {},        // per-section custom hp text
+  photos: {},          // questionId -> array of dataURLs (photo uploads)
+  wechatSummary: null, // editable text summary, generated lazily on first results view
+  noteLists: {},       // questionId -> array of {category, text, photos:[dataURL]} confirmed entries
+  noteDrafts: {},      // questionId -> {category, text} currently-being-typed entry (not yet confirmed)
+  summaryLang: 'zh',   // 'zh' | 'en' — which language the WeChat summary report is shown in
+  manualFees: [],      // array of manually-added fee text strings
+  manualFeeDraft: '',  // text currently being typed into the "add fee" input
+};
+
+/* ---------------- progress / completion helpers ---------------- */
+
+function isQuestionAnswered(q) {
+  if (q.optional) return true; // optional questions never block completion
+  if (q.type === "text" || q.type === "date") {
+    return !!(state.answers[q.id] && state.answers[q.id].trim());
+  }
+  if (q.type === "note_list" || q.type === "fee_summary") return true; // optional, never blocks
+  if (q.type === "hp_combo") {
+    const dependsVal = state.answers[q.dependsOn];
+    if (!dependsVal) return true; // not relevant yet
+    return !!state.answers[q.id];
+  }
+  return !!state.answers[q.id];
+}
+
+function sectionCompletion(section) {
+  const required = section.questions.filter(q => !q.optional && q.type !== "note_list" && q.type !== "fee_summary");
+  if (required.length === 0) return 100;
+  const done = required.filter(isQuestionAnswered).length;
+  return Math.round((done / required.length) * 100);
+}
+
+function sectionHasWarning(section) {
+  return section.questions.some(q => {
+    if (!q.options) return false;
+    const selected = state.answers[q.id];
+    const opt = q.options.find(o => o.v === selected);
+    return opt && opt.warn;
+  });
+}
+
+function overallCompletion() {
+  const total = SECTIONS.reduce((sum, s) => sum + sectionCompletion(s), 0);
+  return Math.round(total / SECTIONS.length);
+}
+
+function collectWarnings() {
+  const warnings = [];
+  SECTIONS.forEach(section => {
+    section.questions.forEach(q => {
+      if (!q.options) return;
+      const selected = state.answers[q.id];
+      const opt = q.options.find(o => o.v === selected);
+      if (opt && opt.warn) {
+        warnings.push(`【${section.title}】${q.text.split('\n')[0]} → ${opt.label}`);
+      }
+    });
+  });
+  return warnings;
+}
+
+function collectRawFees() {
+  // Returns each auto-generated fee with a stable id (based on the question
+  // it came from), used for the WeChat summary text and results breakdown.
+  const fees = [];
+  SECTIONS.forEach(section => {
+    section.questions.forEach(q => {
+      const selected = state.answers[q.id];
+      if (!selected) return;
+      const count = state.counts[q.id];
+      const dropdownVal = state.dropdowns[q.id];
+      if (q.feeIf && selected === q.feeIf) {
+        let text = q.feeTextFn ? q.feeTextFn(count, dropdownVal) : q.feeText;
+        if (text) fees.push({ id: q.id, text, source: 'auto' });
+      }
+      if (q.feeIf2 && selected === q.feeIf2 && q.feeText2) {
+        fees.push({ id: q.id + '_2', text: q.feeText2, source: 'auto' });
+      }
+    });
+  });
+  return fees;
+}
+
+function collectFeeQuestions() {
+  // Returns every question tagged feeQuestion:true across all sections,
+  // paired with its parent section. Used to render a single page where every
+  // possible fee-bearing question can be answered/adjusted directly, sharing
+  // the same state.answers as the original section — so editing here or
+  // there always stays in sync.
+  const result = [];
+  SECTIONS.forEach(section => {
+    section.questions.forEach(q => {
+      if (q.feeQuestion) result.push({ section, q });
+    });
+  });
+  return result;
+}
+
+function collectFees() {
+  // Back-compat helper used by the WeChat summary and the warn/fee detail
+  // views: returns plain text strings, respecting exclusions + manual adds.
+  return collectFeesWithOverrides().map(f => f.text);
+}
+
+function collectFeesWithOverrides() {
+  const raw = collectRawFees();
+  const manual = (state.manualFees || []).map((text, i) => ({ id: `manual_${i}`, text, source: 'manual' }));
+  return [...raw, ...manual];
+}
+
+function collectSalesNotes() {
+  const notes = [];
+  SECTIONS.forEach(section => {
+    section.questions.forEach(q => {
+      const selected = state.answers[q.id];
+      if (!selected) return;
+      if (q.salesNoteIf && selected === q.salesNoteIf && q.salesNoteText) {
+        notes.push(q.salesNoteText);
+      }
+      if (q.salesNoteFn) {
+        const noteVal = state.follow[q.id + '_note'];
+        const text = q.salesNoteFn(selected, noteVal);
+        if (text) notes.push(text);
+      }
+    });
+  });
+  return notes;
+}
+
+function partsToKwLines(partsStr) {
+  // "8.1+5.6+3.6+3.6" -> group identical values -> ["8.1kW-1","5.6kW-1","3.6kW-2"]
+  if (!partsStr) return [];
+  const nums = partsStr.split('+').map(s => s.trim()).filter(Boolean);
+  const counts = {};
+  const order = [];
+  nums.forEach(n => {
+    if (!(n in counts)) order.push(n);
+    counts[n] = (counts[n] || 0) + 1;
+  });
+  return order.map(n => `${n}kW-${counts[n]}`);
+}
+
+function getHpComboLines() {
+  const dependsVal = state.answers['indoor_count'];
+  const selected = state.answers['hp_combo'];
+  if (!selected) return [];
+  if (selected === 'custom') {
+    const custom = state.follow['hp_combo_custom'] || '';
+    // try to parse as +-separated kW values; if it fails, just return raw line
+    if (/^[\d.+\s]+$/.test(custom)) {
+      return partsToKwLines(custom);
+    }
+    return custom ? [custom] : [];
+  }
+  const combo = (HP_COMBOS[dependsVal] || []).find(c => c.key === selected);
+  if (!combo) return [];
+  return partsToKwLines(combo.parts);
+}
+
+function collectCategorizedNotes() {
+  // Gathers all note_list entries across every section, split by category
+  const buckets = { sales: [], install: [], other: [] };
+  SECTIONS.forEach(section => {
+    section.questions.forEach(q => {
+      if (q.type !== 'note_list') return;
+      const entries = state.noteLists[q.id] || [];
+      entries.forEach(e => {
+        if (buckets[e.category]) buckets[e.category].push(e.text);
+      });
+    });
+  });
+  return buckets;
+}
+
+function splitBilingual(str, lang) {
+  // Most fee/note text is stored as "中文片段 English fragment" combined in one
+  // string. This splits on the first run of ASCII letters to separate the two
+  // halves, so the WeChat summary can show a clean single-language report.
+  if (!str) return str;
+  const match = str.match(/^([^a-zA-Z]*)([a-zA-Z][\s\S]*)$/);
+  if (!match) return str; // no ASCII letters found, string is already pure Chinese
+  const zhPart = match[1].trim();
+  const enPart = match[2].trim();
+  if (!zhPart || !enPart) return str; // didn't cleanly split, return as-is
+  return lang === 'en' ? enPart : zhPart;
+}
+
+function buildWeChatSummary(lang) {
+  lang = lang || 'zh';
+  const name = state.answers['customer_name'] || '';
+  const addr = state.answers['address'] || '';
+  const indoorCount = state.answers['indoor_count'] || '';
+  const systemType = state.answers['system_type'] === '其他'
+    ? (state.follow['system_type_note'] || (lang === 'en' ? 'Other' : '其他'))
+    : (state.answers['system_type'] || '');
+  const kwLines = getHpComboLines();
+  const fees = collectFees().map(f => splitBilingual(f, lang));
+  const autoSalesNotes = collectSalesNotes().map(n => splitBilingual(n, lang));
+  const categorized = collectCategorizedNotes();
+  const allSalesNotes = [...autoSalesNotes, ...categorized.sales];
+  const allInstallNotes = categorized.install;
+  const allOtherNotes = categorized.other;
+
+  const L = lang === 'en' ? {
+    done: 'Inspection completed',
+    unitPrefix: 'Multi-split',
+    units: 'units',
+    extraFees: 'Extra Fees:',
+    none: '(None)',
+    salesNotes: 'Sales Notes:',
+    installNotes: 'Installation Notes:',
+    otherNotes: 'Other Notes:',
+  } : {
+    done: 'inspection已结束',
+    unitPrefix: '一拖',
+    units: '',
+    extraFees: '额外费用：',
+    none: '（無）',
+    salesNotes: '銷售注意事項：',
+    installNotes: '安裝注意事項：',
+    otherNotes: '其他注意事項：',
+  };
+
+  let lines = [];
+  lines.push(L.done);
+  lines.push(name);
+  lines.push(addr);
+  if (indoorCount) {
+    lines.push(lang === 'en' ? `${L.unitPrefix} ${indoorCount} ${L.units}`.trim() : `${L.unitPrefix}${indoorCount}`);
+  }
+  if (systemType) lines.push(systemType);
+  kwLines.forEach(l => lines.push(l));
+  lines.push(L.extraFees);
+  if (fees.length > 0) {
+    fees.forEach(f => lines.push(f));
+  } else {
+    lines.push(L.none);
+  }
+  lines.push(L.salesNotes);
+  if (allSalesNotes.length > 0) {
+    allSalesNotes.forEach((n, i) => lines.push(`${i+1}. ${n}`));
+  } else {
+    lines.push('1. ');
+  }
+  lines.push(L.installNotes);
+  if (allInstallNotes.length > 0) {
+    allInstallNotes.forEach((n, i) => lines.push(`${i+1}. ${n}`));
+  } else {
+    lines.push('1. ');
+  }
+  lines.push(L.otherNotes);
+  if (allOtherNotes.length > 0) {
+    allOtherNotes.forEach((n, i) => lines.push(`${i+1}. ${n}`));
+  } else {
+    lines.push('1. ');
+  }
+
+  return lines.join('\n');
+}
+
+/* ---------------- render: router ---------------- */
+
+function render() {
+  const app = document.getElementById('app');
+  if (state.view === "results") { app.innerHTML = renderResults(); attachResultEvents(); return; }
+  if (state.view === "section") { app.innerHTML = renderSection(); attachSectionEvents(); return; }
+  app.innerHTML = renderHub();
+  attachHubEvents();
+  window.scrollTo(0,0);
+}
+
+/* ---------------- HUB view ---------------- */
+
+function ringSVG(pct, warn) {
+  const r = 18, c = 2 * Math.PI * r;
+  const offset = c - (pct/100) * c;
+  const color = warn ? 'var(--warn)' : (pct === 100 ? 'var(--accent)' : 'var(--gold)');
+  return `
+    <svg width="46" height="46" viewBox="0 0 46 46">
+      <circle cx="23" cy="23" r="${r}" fill="none" stroke="var(--line)" stroke-width="4"/>
+      <circle cx="23" cy="23" r="${r}" fill="none" stroke="${color}" stroke-width="4"
+        stroke-dasharray="${c}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
+    </svg>`;
+}
+
+function renderHub() {
+  const overall = overallCompletion();
+  const allWarnings = collectWarnings();
+
+  let cardsHtml = SECTIONS.map((section, idx) => {
+    const pct = sectionCompletion(section);
+    const warn = sectionHasWarning(section);
+    let statusText, statusClass = '';
+    if (pct === 100) {
+      statusText = warn ? '已完成 · 含現場限制 Done · has site limitation' : '已完成 Done';
+      statusClass = warn ? 'warn-text' : '';
+    } else if (pct === 0) {
+      statusText = '尚未開始 Not started';
+      statusClass = 'incomplete';
+    } else {
+      statusText = `完成 ${pct}% 評估，尚有未填項目 ${pct}% done, items remaining`;
+      statusClass = 'incomplete';
+    }
+    let cardCls = 'hub-card';
+    if (pct === 100) cardCls += ' complete';
+    if (warn) cardCls += ' has-warn';
+
+    return `
+      <div class="${cardCls}" data-section="${section.key}">
+        <div class="hub-ring">
+          ${ringSVG(pct, warn)}
+          <div class="pct-label">${pct}%</div>
+        </div>
+        <div class="hub-body">
+          <div class="hub-eyebrow">${section.eyebrow}</div>
+          <div class="hub-title">${section.title}</div>
+          <div class="hub-status ${statusClass}">${statusText}</div>
+        </div>
+        <div class="hub-chevron">›</div>
+      </div>`;
+  }).join('');
+
+  let banner = '';
+  if (overall === 100) {
+    banner = `<div class="finish-banner ready">✓ 全部區塊已完成，可以結束 inspection All sections complete, ready to finish inspection</div>`;
+  } else {
+    const incompleteNames = SECTIONS.filter(s => sectionCompletion(s) < 100).map(s => s.title).join('、');
+    banner = `<div class="finish-banner">⚠ 尚未完成：${incompleteNames}。需全部填完才能結束 inspection Incomplete: ${incompleteNames}. Must finish all sections to end inspection</div>`;
+  }
+
+  return `
+    <div class="topbar">
+      <div class="row">
+        <div class="title">空調安裝現場評估 AC Installation Site Inspection</div>
+      </div>
+      <div class="overall">
+        <div class="overall-track"><div class="overall-fill" style="width:${overall}%"></div></div>
+        <div class="overall-pct">${overall}%</div>
+      </div>
+    </div>
+    <div class="hub-head">
+      <div class="h1">點選任一區塊開始填寫 Tap any section to start</div>
+      <div class="h2">不限順序，可隨時切換區塊；每塊會顯示完成度 Any order, switch sections anytime; each shows % complete</div>
+    </div>
+    <div class="hub-list">${cardsHtml}</div>
+    ${banner}
+    <div class="finish-cta">
+      <button id="viewResultsBtn" ${overall < 100 ? 'disabled' : ''}>
+        ${overall === 100 ? `結束 inspection End Inspection ${allWarnings.length > 0 ? `(⚠ ${allWarnings.length}項限制 ${allWarnings.length} limitation(s))` : ''}` : `尚有未完成項目 Items remaining (${overall}%)`}
+      </button>
+    </div>
+    <div style="height:30px"></div>
+  `;
+}
+
+function attachHubEvents() {
+  document.querySelectorAll('.hub-card').forEach(el => {
+    el.addEventListener('click', () => {
+      state.currentSection = el.getAttribute('data-section');
+      state.view = "section";
+      render();
+    });
+  });
+  document.getElementById('viewResultsBtn').addEventListener('click', () => {
+    state.view = "results";
+    render();
+  });
+}
+
+/* ---------------- SECTION view ---------------- */
+
+function renderSection() {
+  const section = SECTIONS.find(s => s.key === state.currentSection);
+  const idx = SECTIONS.findIndex(s => s.key === state.currentSection);
+  let qHtml = section.questions.map(q => renderQuestion(q)).join('');
+
+  let chipsHtml = SECTIONS.map(s => {
+    const pct = sectionCompletion(s);
+    const warn = sectionHasWarning(s);
+    let cls = 'jump-chip';
+    if (s.key === state.currentSection) cls += ' active';
+    if (pct === 100) cls += ' chip-complete';
+    if (warn) cls += ' chip-warn';
+    return `<div class="${cls}" data-jumpto="${s.key}">${s.title} <span class="chip-pct">${pct}%</span></div>`;
+  }).join('');
+
+  return `
+    <div class="topbar">
+      <div class="row">
+        <div class="title">${section.title}</div>
+        <div class="backlink" id="toHub">‹ 回總覽 Overview</div>
+      </div>
+    </div>
+    <div class="jump-strip">${chipsHtml}</div>
+    <div class="section-head">
+      <div class="section-eyebrow">${section.eyebrow}</div>
+      <div class="section-title">${section.title}</div>
+      <div class="section-sub">${section.sub}</div>
+    </div>
+    <div class="qlist">${qHtml}</div>
+    <div class="bottombar">
+      <button class="btn btn-prev" id="toHub2">回總覽 Overview</button>
+      <button class="btn btn-next" id="nextSectionBtn">${idx < SECTIONS.length-1 ? '下一區塊 Next：'+SECTIONS[idx+1].title : '回總覽查看結果 Back to overview'}</button>
+    </div>
+  `;
+}
+
+function renderPhotoWidget(qid) {
+  const photos = state.photos[qid] || [];
+  let thumbs = photos.map((src, i) => `
+    <div class="photo-thumb">
+      <img src="${src}">
+      <div class="remove-thumb" data-removephoto="${qid}" data-idx="${i}">×</div>
+    </div>`).join('');
+  return `
+    <div class="photo-upload">
+      <label class="photo-upload-btn">
+        📷 上傳照片 Upload Photo${photos.length > 0 ? `（已選 ${photos.length} 張 ${photos.length} selected）` : ''}
+        <input type="file" accept="image/*" capture="environment" multiple data-photofield="${qid}" style="display:none">
+      </label>
+      ${photos.length > 0 ? `<div class="photo-thumbs">${thumbs}</div>` : ''}
+    </div>`;
+}
+
+function renderQuestion(q) {
+  if (q.type === "text") {
+    const val = state.answers[q.id] || '';
+    return `
+      <div class="qcard">
+        <div class="qtext">${q.label}</div>
+        <input type="text" data-field="${q.id}" placeholder="輸入${q.label}" value="${val.replace(/"/g,'&quot;')}">
+      </div>`;
+  }
+  if (q.type === "date") {
+    const val = state.answers[q.id] || '';
+    return `
+      <div class="qcard">
+        <div class="qtext">${q.label}</div>
+        <input type="date" data-field="${q.id}" value="${val}">
+      </div>`;
+  }
+  if (q.type === "note_list") {
+    const entries = state.noteLists[q.id] || [];
+    const draft = state.noteDrafts[q.id] || { category: 'sales', text: '' };
+    const tagClass = { sales: 'tag-sales', install: 'tag-install', other: 'tag-other' };
+    const tagLabel = { sales: '銷售注意 Sales', install: '安裝注意 Install', other: '其他注意 Other' };
+
+    let entriesHtml = entries.map((e, i) => `
+      <div class="note-entry">
+        <span class="note-entry-remove" data-removenote="${q.id}" data-idx="${i}">移除 Remove ×</span>
+        <div class="note-entry-tag ${tagClass[e.category]}">${tagLabel[e.category]}</div>
+        <div class="note-entry-text">${e.text}</div>
+        ${e.photos && e.photos.length > 0 ? `<div class="photo-thumbs" style="margin-top:8px;">${e.photos.map(src => `<div class="photo-thumb"><img src="${src}"></div>`).join('')}</div>` : ''}
+      </div>`).join('');
+
+    const draftPhotos = state.photos[q.id + '_draft'] || [];
+
+    return `
+      <div class="qcard">
+        <div class="qtext">${q.text}</div>
+        ${entries.length > 0 ? `<div class="note-entries">${entriesHtml}</div>` : ''}
+        <div class="note-draft-row">
+          <select data-notecategory="${q.id}">
+            <option value="sales" ${draft.category==='sales'?'selected':''}>銷售注意 Sales</option>
+            <option value="install" ${draft.category==='install'?'selected':''}>安裝注意 Install</option>
+            <option value="other" ${draft.category==='other'?'selected':''}>其他注意 Other</option>
+          </select>
+          <textarea data-notetext="${q.id}" placeholder="輸入這條注意事項... Enter note...">${draft.text || ''}</textarea>
+        </div>
+        ${renderPhotoWidget(q.id + '_draft')}
+        <button class="note-confirm-btn" data-noteconfirm="${q.id}" ${!draft.text || !draft.text.trim() ? 'disabled' : ''}>✓ 確認，新增這條 Confirm & add</button>
+      </div>`;
+  }
+  if (q.type === "fee_summary") {
+    const feeQuestions = collectFeeQuestions();
+    const manualFees = state.manualFees || [];
+
+    // Group by source section so the list reads like "Switchboard: ...",
+    // "Indoor Unit: ...", making it clear where each item normally lives.
+    const grouped = {};
+    const order = [];
+    feeQuestions.forEach(({ section, q: fq }) => {
+      if (!grouped[section.key]) { grouped[section.key] = { section, items: [] }; order.push(section.key); }
+      grouped[section.key].items.push(fq);
+    });
+
+    let groupsHtml = order.map(key => {
+      const { section, items } = grouped[key];
+      const itemsHtml = items.map(fq => renderQuestion(fq)).join('');
+      return `
+        <div class="fee-group">
+          <div class="fee-group-label">${section.title}</div>
+          ${itemsHtml}
+        </div>`;
+    }).join('');
+
+    let manualRows = manualFees.map((text, i) => `
+      <div class="fee-row fee-row-manual">
+        <span class="fee-row-manual-tag">手動 Manual</span>
+        <span class="fee-row-text">${text}</span>
+        <span class="fee-row-remove" data-removemanualfee="${i}">移除 Remove ×</span>
+      </div>`).join('');
+
+    const totalCount = collectFeesWithOverrides().length;
+
+    return `
+      <div class="qcard">
+        <div class="qtext">${q.text}</div>
+        ${q.hint ? `<div class="qhint">${q.hint}</div>` : ''}
+        <div class="fee-question-groups">
+          ${groupsHtml}
+        </div>
+        <div class="fee-manual-section">
+          <div class="fee-group-label">手動新增 Manual Additions</div>
+          ${manualRows ? `<div class="fee-summary-list">${manualRows}</div>` : ''}
+          <div class="fee-add-row">
+            <input type="text" id="manualFeeInput" placeholder="輸入新的費用項目... Add a fee item..." value="${(state.manualFeeDraft||'').replace(/"/g,'&quot;')}">
+            <button id="addManualFeeBtn" ${!state.manualFeeDraft || !state.manualFeeDraft.trim() ? 'disabled' : ''}>+ 新增 Add</button>
+          </div>
+        </div>
+        <div class="fee-total-line">共 ${totalCount} 項附加費用 ${totalCount} extra fee item(s) total</div>
+      </div>`;
+  }
+  if (q.type === "hp_combo") {
+    const dependsVal = state.answers[q.dependsOn];
+    if (!dependsVal || !HP_COMBOS[dependsVal]) {
+      return `
+        <div class="qcard">
+          <div class="qtext">${q.text}</div>
+          <div class="qhint">請先選擇「一拖幾」，才會列出對應的空調組合 Please select unit count first to see combinations</div>
+        </div>`;
+    }
+    const combos = HP_COMBOS[dependsVal];
+    const selected = state.answers[q.id];
+    let comboHtml = combos.map(c => {
+      const cls = selected === c.key ? 'combo-opt selected' : 'combo-opt';
+      return `
+        <div class="${cls}" data-qid="${q.id}" data-val="${c.key}">
+          <div class="combo-radio"></div>
+          <div class="combo-label"><span class="combo-tag">${c.key}</span>${c.label}</div>
+        </div>`;
+    }).join('');
+    const customCls = selected === "custom" ? 'combo-opt selected' : 'combo-opt';
+    comboHtml += `
+      <div class="${customCls}" data-qid="${q.id}" data-val="custom">
+        <div class="combo-radio"></div>
+        <div class="combo-label"><span class="combo-tag">自訂 Custom</span>其他 / 手動輸入 Other / Manual entry</div>
+      </div>`;
+    let customInput = '';
+    if (selected === "custom") {
+      const cv = state.follow[q.id + '_custom'] || '';
+      customInput = `<textarea rows="2" data-followfield="${q.id}_custom" placeholder="例：8.1+5.6+3.6+3.6 (請列出各台kW數)">${cv}</textarea>`;
+    }
+    return `
+      <div class="qcard">
+        <div class="qtext">${q.text}（一拖${dependsVal}）</div>
+        ${q.hint ? `<div class="qhint">${q.hint}</div>` : ''}
+        <div class="combo-list">${comboHtml}</div>
+        ${customInput}
+      </div>`;
+  }
+
+  if (q.type === "select") {
+    const selected = state.answers[q.id];
+    const opt = q.options.find(o => o.v === selected);
+    const isFlagged = opt && opt.warn;
+    const isFee = opt && opt.fee;
+    const optsHtml = q.options.map(o => `<option value="${o.v}" ${selected===o.v?'selected':''}>${o.label}</option>`).join('');
+    let extra = '';
+    if (isFlagged) {
+      extra = `<div class="flag-banner">⚠ 此項為現場限制，可能無法直接安裝，需與房主協調 Site limitation, may block installation, needs discussion with homeowner</div>`;
+    } else if (isFee) {
+      extra = `<div class="fee-banner">💰 此項將計入附加費用清單 Added to extra fees list</div>`;
+    }
+    const photoHtml = q.photo ? renderPhotoWidget(q.id) : '';
+    return `
+      <div class="qcard ${isFlagged ? 'flagged' : ''}">
+        <div class="qtext">${q.text}</div>
+        ${q.hint ? `<div class="qhint">${q.hint}</div>` : ''}
+        <select data-field="${q.id}">
+          <option value="">請選擇 Please select</option>
+          ${optsHtml}
+        </select>
+        ${extra}
+        ${photoHtml}
+      </div>`;
+  }
+
+  // standard option-based question
+  const selected = state.answers[q.id];
+  const isFlagged = q.options.some(o => o.v === selected && o.warn);
+
+  let optsHtml = q.options.map(o => {
+    let cls = 'opt';
+    if (o.warn) cls += ' warn-opt';
+    if (o.fee) cls += ' fee-opt';
+    if (selected === o.v) cls += ' selected';
+    return `<div class="${cls}" data-qid="${q.id}" data-val="${o.v}">${o.label}</div>`;
+  }).join('');
+
+  let extra = '';
+  if (isFlagged) {
+    extra = `<div class="flag-banner">⚠ 此項為現場限制，可能無法直接安裝，需與房主協調 Site limitation, may block installation, needs discussion with homeowner</div>`;
+  } else if (q.feeIf && selected === q.feeIf) {
+    extra = `<div class="fee-banner">💰 此項將計入附加費用清單 Added to extra fees list</div>`;
+  }
+
+  let countHtml = '';
+  if (q.countIf && selected === q.countIf) {
+    const cval = state.counts[q.id] || q.countDefault || '1';
+    countHtml = `
+      <div class="field-row">
+        <div>
+          <label>${q.countLabel}</label>
+          <input type="number" min="1" data-countfield="${q.id}" value="${cval}">
+        </div>
+      </div>`;
+  }
+
+  let dropdownHtml = '';
+  if (q.dropdownIf && selected === q.dropdownIf) {
+    const dval = state.dropdowns[q.id] || '';
+    const opts = q.dropdownOptions.map(o => `<option value="${o}" ${o===dval?'selected':''}>${o}</option>`).join('');
+    dropdownHtml = `
+      <div class="field-row">
+        <div>
+          <label>${q.dropdownLabel}</label>
+          <select data-dropdownfield="${q.id}">
+            <option value="">請選擇 Please select</option>
+            ${opts}
+          </select>
+        </div>
+      </div>`;
+  }
+
+  let noteHtml = '';
+  if (q.noteIf && selected === q.noteIf && q.notePrompt) {
+    const nid = q.id + '_note';
+    const nval = state.follow[nid] || '';
+    noteHtml = `<textarea rows="2" data-followfield="${nid}" placeholder="${q.notePrompt}" style="margin-top:10px">${nval}</textarea>`;
+  }
+
+  let photoHtml = q.photo ? renderPhotoWidget(q.id) : '';
+
+  return `
+    <div class="qcard ${isFlagged ? 'flagged' : ''}">
+      <div class="qtext">${q.text}</div>
+      ${q.hint ? `<div class="qhint">${q.hint}</div>` : ''}
+      <div class="opts">${optsHtml}</div>
+      ${countHtml}
+      ${dropdownHtml}
+      ${noteHtml}
+      ${extra}
+      ${photoHtml}
+    </div>`;
+}
+
+function attachSectionEvents() {
+  document.querySelectorAll('.opt, .combo-opt').forEach(el => {
+    el.addEventListener('click', () => {
+      const qid = el.getAttribute('data-qid');
+      const val = el.getAttribute('data-val');
+      state.answers[qid] = val;
+      render();
+    });
+  });
+  document.querySelectorAll('input[data-field], textarea[data-field], select[data-field]').forEach(el => {
+    el.addEventListener('input', () => { state.answers[el.getAttribute('data-field')] = el.value; });
+    el.addEventListener('change', () => { state.answers[el.getAttribute('data-field')] = el.value; render(); });
+  });
+  document.querySelectorAll('input[data-followfield], textarea[data-followfield]').forEach(el => {
+    el.addEventListener('input', () => { state.follow[el.getAttribute('data-followfield')] = el.value; });
+  });
+  document.querySelectorAll('input[data-countfield]').forEach(el => {
+    el.addEventListener('input', () => { state.counts[el.getAttribute('data-countfield')] = el.value; });
+  });
+  document.querySelectorAll('select[data-dropdownfield]').forEach(el => {
+    el.addEventListener('change', () => {
+      state.dropdowns[el.getAttribute('data-dropdownfield')] = el.value;
+      render();
+    });
+  });
+  document.querySelectorAll('input[data-photofield]').forEach(el => {
+    el.addEventListener('change', (e) => {
+      const qid = el.getAttribute('data-photofield');
+      const files = Array.from(e.target.files || []);
+      if (files.length === 0) return;
+      if (!state.photos[qid]) state.photos[qid] = [];
+      let pending = files.length;
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          state.photos[qid].push(ev.target.result);
+          pending--;
+          if (pending === 0) render();
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+  });
+  document.querySelectorAll('[data-removephoto]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const qid = el.getAttribute('data-removephoto');
+      const idx = parseInt(el.getAttribute('data-idx'), 10);
+      state.photos[qid].splice(idx, 1);
+      render();
+    });
+  });
+  document.querySelectorAll('select[data-notecategory]').forEach(el => {
+    el.addEventListener('change', () => {
+      const qid = el.getAttribute('data-notecategory');
+      if (!state.noteDrafts[qid]) state.noteDrafts[qid] = { category: 'sales', text: '' };
+      state.noteDrafts[qid].category = el.value;
+    });
+  });
+  document.querySelectorAll('textarea[data-notetext]').forEach(el => {
+    el.addEventListener('input', () => {
+      const qid = el.getAttribute('data-notetext');
+      if (!state.noteDrafts[qid]) state.noteDrafts[qid] = { category: 'sales', text: '' };
+      state.noteDrafts[qid].text = el.value;
+      // enable/disable confirm button live without full re-render
+      const btn = document.querySelector(`[data-noteconfirm="${qid}"]`);
+      if (btn) btn.disabled = !el.value.trim();
+    });
+  });
+  document.querySelectorAll('[data-noteconfirm]').forEach(el => {
+    el.addEventListener('click', () => {
+      const qid = el.getAttribute('data-noteconfirm');
+      const draft = state.noteDrafts[qid];
+      if (!draft || !draft.text || !draft.text.trim()) return;
+      if (!state.noteLists[qid]) state.noteLists[qid] = [];
+      const draftPhotos = state.photos[qid + '_draft'] || [];
+      state.noteLists[qid].push({ category: draft.category, text: draft.text.trim(), photos: draftPhotos.slice() });
+      state.noteDrafts[qid] = { category: draft.category, text: '' };
+      state.photos[qid + '_draft'] = [];
+      render();
+    });
+  });
+  document.querySelectorAll('[data-removenote]').forEach(el => {
+    el.addEventListener('click', () => {
+      const qid = el.getAttribute('data-removenote');
+      const idx = parseInt(el.getAttribute('data-idx'), 10);
+      state.noteLists[qid].splice(idx, 1);
+      render();
+    });
+  });
+  const manualFeeInput = document.getElementById('manualFeeInput');
+  if (manualFeeInput) {
+    manualFeeInput.addEventListener('input', () => {
+      state.manualFeeDraft = manualFeeInput.value;
+      const btn = document.getElementById('addManualFeeBtn');
+      if (btn) btn.disabled = !manualFeeInput.value.trim();
+    });
+  }
+  const addManualFeeBtn = document.getElementById('addManualFeeBtn');
+  if (addManualFeeBtn) {
+    addManualFeeBtn.addEventListener('click', () => {
+      const text = (state.manualFeeDraft || '').trim();
+      if (!text) return;
+      if (!state.manualFees) state.manualFees = [];
+      state.manualFees.push(text);
+      state.manualFeeDraft = '';
+      render();
+    });
+  }
+  document.querySelectorAll('[data-removemanualfee]').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.getAttribute('data-removemanualfee'), 10);
+      state.manualFees.splice(idx, 1);
+      render();
+    });
+  });
+  document.querySelectorAll('.jump-chip').forEach(el => {
+    el.addEventListener('click', () => {
+      state.currentSection = el.getAttribute('data-jumpto');
+      window.scrollTo(0,0);
+      render();
+    });
+  });
+  const toHub = document.getElementById('toHub');
+  const toHub2 = document.getElementById('toHub2');
+  [toHub, toHub2].forEach(b => b && b.addEventListener('click', () => { state.view = "hub"; render(); }));
+
+  document.getElementById('nextSectionBtn').addEventListener('click', () => {
+    const idx = SECTIONS.findIndex(s => s.key === state.currentSection);
+    if (idx < SECTIONS.length - 1) {
+      state.currentSection = SECTIONS[idx+1].key;
+      window.scrollTo(0,0);
+      render();
+    } else {
+      state.view = "hub";
+      render();
+    }
+  });
+}
+
+/* ---------------- RESULTS view ---------------- */
+
+function renderResults() {
+  const warnings = collectWarnings();
+  const fees = collectFees();
+  const name = state.answers['customer_name'] || '（未填 Not filled）';
+  const addr = state.answers['address'] || '（未填 Not filled）';
+  const overall = overallCompletion();
+
+  if (state.wechatSummary === undefined || state.wechatSummary === null) {
+    state.summaryLang = state.summaryLang || 'zh';
+    state.wechatSummary = buildWeChatSummary(state.summaryLang);
+  }
+
+  let warnBlock = warnings.length > 0
+    ? `<div class="warn-summary"><h3>⚠ 發現 ${warnings.length} 項現場限制（紅色警示） ${warnings.length} site limitation(s) found</h3><ul>${warnings.map(w => `<li>${w}</li>`).join('')}</ul></div>`
+    : `<div class="ok-banner">✓ 未發現現場限制項，初步評估可正常安裝 No site limitations found, installation looks OK</div>`;
+
+  let feeBlock = fees.length > 0
+    ? `<div class="fee-summary"><h3>💰 附加費用項目（共 ${fees.length} 項） Extra fee items (${fees.length} total)</h3><ul>${fees.map(f => `<li>${f}</li>`).join('')}</ul></div>`
+    : '';
+
+  let incompleteNote = overall < 100
+    ? `<div class="finish-banner" style="margin:0 0 14px;">⚠ 目前整體完成度 ${overall}%，部分區塊尚未填完，以下僅為目前已填內容 Currently ${overall}% complete, some sections unfinished — showing filled content only</div>`
+    : '';
+
+  const langIsZh = (state.summaryLang || 'zh') === 'zh';
+  let wechatBlock = `
+    <div class="wechat-box">
+      <div class="wechat-head">
+        <h3>📋 文字總結（可直接修改） Text Summary (editable)</h3>
+        <div class="wechat-head-actions">
+          <div class="lang-toggle">
+            <button class="lang-toggle-btn ${langIsZh ? 'active' : ''}" data-lang="zh">中文</button>
+            <button class="lang-toggle-btn ${!langIsZh ? 'active' : ''}" data-lang="en">EN</button>
+          </div>
+          <button id="regenSummaryBtn" class="regen-btn">↺ 重新產生 Regenerate</button>
+        </div>
+      </div>
+      <textarea id="wechatSummaryText" class="wechat-textarea" rows="16">${state.wechatSummary}</textarea>
+      <button id="copySummaryBtn" class="copy-btn">📋 複製文字總結 Copy Summary</button>
+      <div id="copyConfirm" class="copy-confirm" style="display:none;">已複製到剪貼簿 Copied to clipboard ✓</div>
+    </div>`;
+
+  let sectionsHtml = SECTIONS.map(section => {
+    let rows = section.questions.map(q => {
+      if (q.type === 'text' || q.type === 'date') {
+        const val = state.answers[q.id];
+        if (!val) return '';
+        return `<div class="res-row"><div class="k">${q.label}</div><div class="v">${val}</div></div>`;
+      }
+      if (q.type === 'note_list') {
+        const entries = state.noteLists[q.id] || [];
+        if (entries.length === 0) return '';
+        const tagLabel = { sales: '銷售 Sales', install: '安裝 Install', other: '其他 Other' };
+        const itemsHtml = entries.map(e => `<div class="res-row"><div class="k">[${tagLabel[e.category]}]</div><div class="v">${e.text}</div></div>`).join('');
+        return itemsHtml;
+      }
+      if (q.type === 'fee_summary') {
+        const finalFees = collectFeesWithOverrides();
+        if (finalFees.length === 0) return '';
+        return finalFees.map(f => `<div class="res-row"><div class="k">${f.source === 'manual' ? '手動 Manual' : '自動 Auto'}</div><div class="v">${f.text}</div></div>`).join('');
+      }
+      if (q.type === 'hp_combo') {
+        const selected = state.answers[q.id];
+        if (!selected) return '';
+        const dependsVal = state.answers[q.dependsOn];
+        let label;
+        if (selected === 'custom') {
+          label = state.follow[q.id + '_custom'] || '（自訂，未填寫內容）';
+        } else {
+          const combo = (HP_COMBOS[dependsVal]||[]).find(c => c.key === selected);
+          label = combo ? combo.label : selected;
+        }
+        return `<div class="res-row"><div class="k">${q.text}</div><div class="v">${label}</div></div>`;
+      }
+      const selected = state.answers[q.id];
+      if (!selected) return '';
+      const opt = q.options.find(o => o.v === selected);
+      const isWarn = opt && opt.warn;
+      let extraText = '';
+      if (q.countIf === selected) {
+        const cv = state.counts[q.id];
+        if (cv) extraText = `（${q.countLabel}: ${cv}）`;
+      }
+      if (q.dropdownIf === selected) {
+        const dv = state.dropdowns[q.id];
+        if (dv) extraText = `（${dv}）`;
+      }
+      if (q.noteIf === selected) {
+        const nv = state.follow[q.id + '_note'];
+        if (nv) extraText = `（${nv}）`;
+      }
+      const photos = state.photos[q.id] || [];
+      let photoRow = '';
+      if (q.photo && photos.length > 0) {
+        photoRow = `<div class="photo-thumbs" style="margin-bottom:6px;">${photos.map(src => `<div class="photo-thumb"><img src="${src}"></div>`).join('')}</div>`;
+      }
+      return `${photoRow}<div class="res-row"><div class="k">${q.text.split('\n')[0]}</div><div class="v ${isWarn?'flagval':''}">${opt ? opt.label : selected}${extraText}${q.photo ? `　📷${photos.length}` : ''}</div></div>`;
+    }).join('');
+    if (!rows.trim()) return '';
+    return `<div class="res-section"><h4>${section.title}</h4>${rows}</div>`;
+  }).join('');
+
+  return `
+    <div class="topbar">
+      <div class="row">
+        <div class="title">評估結果 Results</div>
+        <div class="backlink" id="toHubFromResults">‹ 回總覽 Overview</div>
+      </div>
+    </div>
+    <div class="results">
+      <div class="res-header">
+        <div class="section-eyebrow">評估結果 Results</div>
+        <div class="big">${name}</div>
+        <div class="section-sub">${addr}</div>
+      </div>
+      ${incompleteNote}
+      ${warnBlock}
+      ${feeBlock}
+      ${wechatBlock}
+      <div class="res-divider">完整評估明細 Full Inspection Details</div>
+      ${sectionsHtml}
+      <button class="back-to-hub-btn" id="backToHubBtn">‹ 回總覽繼續填寫 Back to overview</button>
+      <button class="restart-btn" id="restartBtn">↺ 重新填寫（測試用） Restart (testing only)</button>
+    </div>`;
+}
+
+function attachResultEvents() {
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    state = { view: "hub", currentSection: null, answers: {}, follow: {}, counts: {}, dropdowns: {}, hpCustom: {}, photos: {}, wechatSummary: null, noteLists: {}, noteDrafts: {}, summaryLang: 'zh', manualFees: [], manualFeeDraft: '' };
+    render();
+  });
+  document.getElementById('backToHubBtn').addEventListener('click', () => { state.view = "hub"; render(); });
+  document.getElementById('toHubFromResults').addEventListener('click', () => { state.view = "hub"; render(); });
+
+  const ta = document.getElementById('wechatSummaryText');
+  if (ta) {
+    ta.addEventListener('input', () => { state.wechatSummary = ta.value; });
+  }
+  const regenBtn = document.getElementById('regenSummaryBtn');
+  if (regenBtn) {
+    regenBtn.addEventListener('click', () => {
+      state.wechatSummary = buildWeChatSummary(state.summaryLang || 'zh');
+      render();
+    });
+  }
+  document.querySelectorAll('.lang-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.getAttribute('data-lang');
+      if (lang === state.summaryLang) return;
+      state.summaryLang = lang;
+      // Switching language regenerates the summary from current answers rather
+      // than translating in place — this keeps any manual edits in the OLD
+      // language from leaking into the new one, since a fresh single-language
+      // build is the only way to guarantee a clean result.
+      state.wechatSummary = buildWeChatSummary(lang);
+      render();
+    });
+  });
+  const copyBtn = document.getElementById('copySummaryBtn');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', async () => {
+      const text = ta ? ta.value : state.wechatSummary;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (e) {
+        ta.select();
+        document.execCommand('copy');
+      }
+      const confirm = document.getElementById('copyConfirm');
+      if (confirm) {
+        confirm.style.display = 'block';
+        setTimeout(() => { confirm.style.display = 'none'; }, 2000);
+      }
+    });
+  }
+}
+
+render();
+
+/* =======================================================================
+   平面圖標註模組（獨立於問卷狀態，左側常駐面板）
+========================================================================= */
+let fpStickers = [];
+let fpNextId = 1;
+let fpNextRoomNum = 1;
+let fpSelectedId = null;
+let fpDragState = null;
+let fpRotateState = null;
+let fpBgImageSrc = null;
+let fpCanvasWidth = 900;
+let fpCanvasHeight = 650;
+let fpZoom = 1; // 1 = 100%
+let fpPinchState = null; // {startDist, startZoom}
+let fpMode = 'move'; // 'move' | 'draw'
+let fpPendingSticker = null; // 'indoor' | 'outdoor' | 'room' — type waiting to be placed on tap
+let fpDrawColor = '#1e3a6e';
+let fpEraserOn = false;
+let fpDrawTool = 'pen'; // 'pen' | 'line' | 'rect'
+let fpShapeStart = null; // {x, y} start point for line/rect preview
+let fpStrokeHistory = []; // array of ImageData snapshots for undo
+let fpIsDrawing = false;
+let fpLastPoint = null;
+
+const fpCanvas = document.getElementById('fpCanvas');
+const fpCanvasWrap = document.getElementById('fpCanvasWrap');
+const shellEl = document.getElementById('shell');
+const fpDrawCanvas = document.getElementById('fpDrawCanvas');
+const fpDrawCtx = fpDrawCanvas.getContext('2d');
+fpDrawCtx.lineCap = 'round';
+fpDrawCtx.lineJoin = 'round';
+
+function fpSvgIcon(type) {
+  return `<svg viewBox="0 0 60 60"><use href="#icon-${type}"/></svg>`;
+}
+
+function fpRenderCanvas() {
+  const emptyState = fpBgImageSrc ? '' : `
+    <div class="fp-canvas-empty" id="fpEmptyState">
+      <div>📷 上傳底圖開始標註<br>Upload floor plan to start</div>
+      <button id="fpEmptyUploadBtn">上傳底圖 Upload</button>
+    </div>`;
+
+  const bgHtml = fpBgImageSrc ? `<img src="${fpBgImageSrc}" class="fp-bg-image" id="fpBgImg">` : '';
+  document.getElementById('fpBgLayer').innerHTML = emptyState + bgHtml;
+
+  const stickersHtml = fpStickers.map(s => {
+    const isSelected = s.id === fpSelectedId;
+    let inner = '';
+    let size = 45;
+    if (s.type === 'room') {
+      size = 35;
+      inner = `<div class="fp-room-label">${s.label}</div>`;
+    } else {
+      inner = `<div class="fp-sticker-inner" style="transform: rotate(${s.rotation}deg)">${fpSvgIcon(s.type)}</div>`;
+    }
+
+    let controls = '';
+    if (isSelected) {
+      if (s.type === 'room') {
+        controls = `
+          <div class="fp-room-stepper">
+            <button data-fproomminus="${s.id}">－</button>
+            <button data-fproomplus="${s.id}">＋</button>
+          </div>
+          <div class="fp-delete-handle" data-fpdelete="${s.id}">🗑</div>`;
+      } else {
+        controls = `
+          <div class="fp-rotate-handle" data-fprotatehandle="${s.id}">↻</div>
+          <div class="fp-delete-handle" data-fpdelete="${s.id}">🗑</div>`;
+      }
+    }
+
+    return `
+      <div class="fp-sticker ${isSelected?'selected':''}" data-fpsticker="${s.id}"
+           style="left:${s.x}px; top:${s.y}px; width:${size}px; height:${size}px; margin-left:-${size/2}px; margin-top:-${size/2}px;">
+        ${controls}
+        <div class="fp-sticker-ring" style="width:100%;height:100%;">${inner}</div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('fpStickerLayer').innerHTML = stickersHtml;
+  fpAttachCanvasEvents();
+}
+
+function fpAttachCanvasEvents() {
+  const emptyBtn = document.getElementById('fpEmptyUploadBtn');
+  if (emptyBtn) emptyBtn.addEventListener('click', () => document.getElementById('fpBgUpload').click());
+
+  document.querySelectorAll('[data-fpsticker]').forEach(el => {
+    const id = parseInt(el.getAttribute('data-fpsticker'), 10);
+    el.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('[data-fprotatehandle]') || e.target.closest('[data-fpdelete]') ||
+          e.target.closest('[data-fproomplus]') || e.target.closest('[data-fproomminus]')) return;
+      const s = fpStickers.find(st => st.id === id);
+      fpDragState = { id, startX: e.clientX, startY: e.clientY, origX: s.x, origY: s.y, el };
+      el.classList.add('dragging');
+      e.preventDefault();
+      if (fpSelectedId !== id) {
+        fpSelectedId = id;
+        fpRenderCanvas();
+      }
+    });
+  });
+
+  document.querySelectorAll('[data-fprotatehandle]').forEach(el => {
+    el.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const id = parseInt(el.getAttribute('data-fprotatehandle'), 10);
+      const stickerEl = document.querySelector(`[data-fpsticker="${id}"]`);
+      const innerEl = stickerEl.querySelector('.fp-sticker-inner');
+      const rect = stickerEl.getBoundingClientRect();
+      const centerX = rect.left + rect.width/2;
+      const centerY = rect.top + rect.height/2;
+      const s = fpStickers.find(st => st.id === id);
+      const startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * 180/Math.PI;
+      fpRotateState = { id, centerX, centerY, startAngle, origRotation: s.rotation, innerEl };
+      el.classList.add('rotating');
+    });
+  });
+
+  document.querySelectorAll('[data-fpdelete]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = parseInt(el.getAttribute('data-fpdelete'), 10);
+      fpStickers = fpStickers.filter(s => s.id !== id);
+      if (fpSelectedId === id) fpSelectedId = null;
+      fpRenderCanvas();
+    });
+  });
+
+  document.querySelectorAll('[data-fproomplus]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = parseInt(el.getAttribute('data-fproomplus'), 10);
+      const s = fpStickers.find(st => st.id === id);
+      const n = parseInt(s.label, 10);
+      s.label = String((isNaN(n) ? 0 : n) + 1);
+      fpRenderCanvas();
+    });
+  });
+  document.querySelectorAll('[data-fproomminus]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = parseInt(el.getAttribute('data-fproomminus'), 10);
+      const s = fpStickers.find(st => st.id === id);
+      const n = parseInt(s.label, 10);
+      s.label = String(Math.max(1, (isNaN(n) ? 1 : n) - 1));
+      fpRenderCanvas();
+    });
+  });
+
+}
+
+// Attached once (not inside fpAttachCanvasEvents) to avoid stacking duplicate
+// listeners on every render, which was the main cause of growing lag over time.
+fpCanvas.addEventListener('pointerdown', (e) => {
+  // Placement mode: tap the canvas to drop the pending sticker at that spot.
+  if (fpPendingSticker && fpMode === 'move') {
+    const rect = fpCanvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / fpZoom;
+    const y = (e.clientY - rect.top) / fpZoom;
+    const type = fpPendingSticker;
+    fpCancelPlacing();
+    fpPlaceSticker(type, x, y);
+    e.stopPropagation();
+    return;
+  }
+  if (e.target === fpCanvas || e.target.id === 'fpBgImg' || e.target.id === 'fpBgLayer') {
+    fpSelectedId = null;
+    fpRenderCanvas();
+  }
+});
+
+document.addEventListener('pointermove', (e) => {
+  if (fpDragState) {
+    const dx = (e.clientX - fpDragState.startX) / fpZoom;
+    const dy = (e.clientY - fpDragState.startY) / fpZoom;
+    const s = fpStickers.find(st => st.id === fpDragState.id);
+    if (!s) return;
+    s.x = fpDragState.origX + dx;
+    s.y = fpDragState.origY + dy;
+    if (fpDragState.el) {
+      fpDragState.el.style.left = s.x + 'px';
+      fpDragState.el.style.top = s.y + 'px';
+    }
+    return;
+  }
+  if (fpRotateState) {
+    const s = fpStickers.find(st => st.id === fpRotateState.id);
+    if (!s) return;
+    const currentAngle = Math.atan2(e.clientY - fpRotateState.centerY, e.clientX - fpRotateState.centerX) * 180/Math.PI;
+    const delta = currentAngle - fpRotateState.startAngle;
+    let newRotation = Math.round((fpRotateState.origRotation + delta) / 5) * 5;
+    newRotation = ((newRotation % 360) + 360) % 360;
+    s.rotation = newRotation;
+    if (fpRotateState.innerEl) fpRotateState.innerEl.style.transform = `rotate(${s.rotation}deg)`;
+  }
+});
+
+document.addEventListener('pointerup', () => {
+  if (fpDragState) {
+    fpDragState = null;
+    document.querySelectorAll('.fp-sticker.dragging').forEach(el => el.classList.remove('dragging'));
+    fpRenderCanvas();
+  }
+  if (fpRotateState) {
+    fpRotateState = null;
+    document.querySelectorAll('.fp-rotate-handle.rotating').forEach(el => el.classList.remove('rotating'));
+  }
+});
+
+function fpResizeCanvasTo(width, height) {
+  // Resizes the canvas stage to the given size. Capped so an unusually large
+  // photo (e.g. a 4000px wide phone photo) doesn't itself become a
+  // performance problem — 1100px wide is plenty for on-screen annotation and
+  // still exports at a perfectly usable resolution.
+  const MAX_W = 1100, MAX_H = 900;
+  let w = width, h = height;
+  if (w > MAX_W) { h = h * (MAX_W / w); w = MAX_W; }
+  if (h > MAX_H) { w = w * (MAX_H / h); h = MAX_H; }
+  w = Math.round(w);
+  h = Math.round(h);
+
+  fpCanvasWidth = w;
+  fpCanvasHeight = h;
+  fpCanvas.style.width = w + 'px';
+  fpCanvas.style.height = h + 'px';
+
+  // Resizing a <canvas> element's width/height attributes clears its
+  // contents, so preserve any existing strokes by redrawing them onto the
+  // newly-sized canvas (scaled proportionally) before swapping dimensions.
+  const prevDataUrl = fpDrawCanvas.width > 0 && fpDrawCanvas.height > 0
+    ? fpDrawCanvas.toDataURL('image/png') : null;
+  fpDrawCanvas.width = w;
+  fpDrawCanvas.height = h;
+  fpDrawCtx.lineCap = 'round';
+  fpDrawCtx.lineJoin = 'round';
+  if (prevDataUrl) {
+    const img = new Image();
+    img.onload = () => { fpDrawCtx.drawImage(img, 0, 0, w, h); };
+    img.src = prevDataUrl;
+  }
+}
+
+function fpHandleBgUpload(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    fpBgImageSrc = e.target.result;
+    const img = new Image();
+    img.onload = () => {
+      fpResizeCanvasTo(img.naturalWidth, img.naturalHeight);
+      fpRenderCanvas();
+    };
+    img.src = fpBgImageSrc;
+  };
+  reader.readAsDataURL(file);
+}
+
+document.getElementById('fpBgUpload').addEventListener('change', (e) => {
+  fpHandleBgUpload(e.target.files[0]);
+});
+function fpStartPlacing(type) {
+  // Enter "placement mode": the next tap on the canvas places the sticker
+  // at that exact position instead of dumping it in the centre.
+  fpPendingSticker = type;
+
+  // Highlight the chosen tray button, clear others
+  ['fpAddIndoor', 'fpAddOutdoor', 'fpAddRoom'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.classList.remove('fp-placing');
+  });
+  const activeId = type === 'indoor' ? 'fpAddIndoor'
+    : type === 'outdoor' ? 'fpAddOutdoor'
+    : type === 'brick' ? 'fpAddBrick'
+    : type === 'flashing' ? 'fpAddFlashing'
+    : 'fpAddRoom';
+  const activeBtn = document.getElementById(activeId);
+  if (activeBtn) activeBtn.classList.add('fp-placing');
+
+  // Crosshair cursor on the canvas wrap to signal placement mode
+  fpCanvasWrap.classList.add('fp-canvas-placing');
+}
+
+function fpCancelPlacing() {
+  fpPendingSticker = null;
+  ['fpAddIndoor', 'fpAddOutdoor', 'fpAddRoom', 'fpAddBrick', 'fpAddFlashing'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.classList.remove('fp-placing');
+  });
+  fpCanvasWrap.classList.remove('fp-canvas-placing');
+}
+
+function fpPlaceSticker(type, x, y) {
+  const s = { id: fpNextId++, type, x, y, rotation: 0, label: '' };
+  if (type === 'room') s.label = String(fpNextRoomNum++);
+  fpStickers.push(s);
+  fpSelectedId = s.id;
+  fpRenderCanvas();
+}
+
+document.getElementById('fpAddIndoor').addEventListener('click', () => {
+  if (fpPendingSticker === 'indoor') { fpCancelPlacing(); return; }
+  fpStartPlacing('indoor');
+});
+document.getElementById('fpAddOutdoor').addEventListener('click', () => {
+  if (fpPendingSticker === 'outdoor') { fpCancelPlacing(); return; }
+  fpStartPlacing('outdoor');
+});
+document.getElementById('fpAddRoom').addEventListener('click', () => {
+  if (fpPendingSticker === 'room') { fpCancelPlacing(); return; }
+  fpStartPlacing('room');
+});
+document.getElementById('fpAddBrick').addEventListener('click', () => {
+  if (fpPendingSticker === 'brick') { fpCancelPlacing(); return; }
+  fpStartPlacing('brick');
+});
+document.getElementById('fpAddFlashing').addEventListener('click', () => {
+  if (fpPendingSticker === 'flashing') { fpCancelPlacing(); return; }
+  fpStartPlacing('flashing');
+});
+document.getElementById('fpClearBtn').addEventListener('click', () => {
+  // confirm() is silently blocked inside sandboxed iframes (Claude Artifact
+  // on iPad), so we show an inline confirmation banner instead.
+  const existing = document.getElementById('fpClearConfirm');
+  if (existing) { existing.remove(); return; }
+  const banner = document.createElement('div');
+  banner.id = 'fpClearConfirm';
+  banner.className = 'fp-clear-confirm';
+  banner.innerHTML = `
+    <span>確定清空所有內容？ Clear everything?</span>
+    <button id="fpClearYes">確定 Yes</button>
+    <button id="fpClearNo">取消 Cancel</button>`;
+  document.getElementById('fpCanvas').appendChild(banner);
+  document.getElementById('fpClearNo').addEventListener('click', () => banner.remove());
+  document.getElementById('fpClearYes').addEventListener('click', () => {
+    banner.remove();
+    fpStickers = [];
+    fpBgImageSrc = null;
+    fpNextRoomNum = 1;
+    fpSelectedId = null;
+    fpResizeCanvasTo(900, 650);
+    fpDrawCtx.clearRect(0, 0, fpDrawCanvas.width, fpDrawCanvas.height);
+    fpStrokeHistory = [];
+    fpIsDrawing = false;
+    fpShapeStart = null;
+    fpRenderCanvas();
+  });
+});
+document.getElementById('fpCollapseBtn').addEventListener('click', () => {
+  shellEl.classList.add('fp-collapsed');
+});
+document.getElementById('fpExpandBtn').addEventListener('click', () => {
+  shellEl.classList.remove('fp-collapsed');
+});
+
+document.getElementById('fpFullscreenBtn').addEventListener('click', () => {
+  const isFullscreen = shellEl.classList.toggle('fp-fullscreen');
+  document.getElementById('fpFullscreenBtn').textContent = isFullscreen ? '⊠' : '⛶';
+  document.getElementById('fpFullscreenBtn').title = isFullscreen ? '退出全螢幕 Exit fullscreen' : '全螢幕 Fullscreen';
+});
+
+/* ---- Zoom: buttons + pinch gesture ---- */
+function fpApplyZoom(animated) {
+  fpZoom = Math.min(3, Math.max(0.3, fpZoom));
+  fpCanvas.classList.toggle('fp-zoom-animated', !!animated);
+  fpCanvas.style.transform = `scale(${fpZoom})`;
+  document.getElementById('fpZoomPct').textContent = Math.round(fpZoom * 100) + '%';
+}
+
+document.getElementById('fpZoomIn').addEventListener('click', () => {
+  fpZoom += 0.15;
+  fpApplyZoom(true);
+});
+document.getElementById('fpZoomOut').addEventListener('click', () => {
+  fpZoom -= 0.15;
+  fpApplyZoom(true);
+});
+document.getElementById('fpZoomReset').addEventListener('click', () => {
+  fpZoom = 1;
+  fpApplyZoom(true);
+});
+
+// Pinch-to-zoom: track two-finger touch distance and scale the canvas.
+fpCanvasWrap.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    fpPinchState = { startDist: dist, startZoom: fpZoom };
+  }
+}, { passive: true });
+
+fpCanvasWrap.addEventListener('touchmove', (e) => {
+  if (fpPinchState && e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    fpZoom = fpPinchState.startZoom * (dist / fpPinchState.startDist);
+    fpApplyZoom(false);
+    e.preventDefault();
+  }
+}, { passive: false });
+
+fpCanvasWrap.addEventListener('touchend', (e) => {
+  if (e.touches.length < 2) fpPinchState = null;
+}, { passive: true });
+
+/* ---- Drawing: freehand strokes with color picker + eraser + undo ---- */
+function fpSetMode(mode) {
+  const ov = document.getElementById('fpTextOverlay');
+  if (ov) ov.remove();
+  if (mode === 'draw') fpCancelPlacing(); // drawing mode cancels sticker placement
+  fpMode = mode;
+  document.getElementById('fpModeMove').setAttribute('data-active', mode === 'move' ? 'true' : 'false');
+  document.getElementById('fpModeDraw').setAttribute('data-active', mode === 'draw' ? 'true' : 'false');
+  document.getElementById('fpDrawTools').style.display = mode === 'draw' ? 'flex' : 'none';
+  document.getElementById('fpStickerLayer').style.pointerEvents = mode === 'draw' ? 'none' : 'auto';
+  fpDrawCanvas.style.pointerEvents = mode === 'draw' ? 'auto' : 'none';
+}
+
+document.getElementById('fpModeMove').addEventListener('click', () => fpSetMode('move'));
+document.getElementById('fpModeDraw').addEventListener('click', () => fpSetMode('draw'));
+
+function fpSetActiveTool() {
+  document.querySelectorAll('.fp-color-btn').forEach(btn => {
+    btn.setAttribute('data-active', (!fpEraserOn && btn.getAttribute('data-color') === fpDrawColor) ? 'true' : 'false');
+  });
+  document.getElementById('fpEraserBtn').setAttribute('data-active', fpEraserOn ? 'true' : 'false');
+  document.getElementById('fpLineBtn').setAttribute('data-active', (!fpEraserOn && fpDrawTool === 'line') ? 'true' : 'false');
+  document.getElementById('fpRectBtn').setAttribute('data-active', (!fpEraserOn && fpDrawTool === 'rect') ? 'true' : 'false');
+  document.getElementById('fpTextBtn').setAttribute('data-active', (!fpEraserOn && fpDrawTool === 'text') ? 'true' : 'false');
+}
+
+document.querySelectorAll('.fp-color-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    fpDrawColor = btn.getAttribute('data-color');
+    fpEraserOn = false;
+    fpSetActiveTool();
+  });
+});
+document.getElementById('fpEraserBtn').addEventListener('click', () => {
+  fpEraserOn = !fpEraserOn;
+  if (fpEraserOn) fpDrawTool = 'pen'; // eraser uses pen movement logic
+  fpSetActiveTool();
+});
+document.getElementById('fpTextBtn').addEventListener('click', () => {
+  fpDrawTool = 'text';
+  fpEraserOn = false;
+  fpSetActiveTool();
+});
+document.getElementById('fpLineBtn').addEventListener('click', () => {
+  fpDrawTool = 'line';
+  fpEraserOn = false;
+  fpSetActiveTool();
+});
+document.getElementById('fpRectBtn').addEventListener('click', () => {
+  fpDrawTool = 'rect';
+  fpEraserOn = false;
+  fpSetActiveTool();
+});
+fpSetActiveTool();
+
+function fpPlaceTextInput(canvasX, canvasY) {
+  // Remove any existing text input first
+  const old = document.getElementById('fpTextOverlay');
+  if (old) old.remove();
+
+  // Convert canvas pixel position → screen position (accounting for zoom + canvas offset)
+  const canvasRect = fpDrawCanvas.getBoundingClientRect();
+  const screenX = canvasRect.left + canvasX * fpZoom;
+  const screenY = canvasRect.top  + canvasY * fpZoom;
+
+  const input = document.createElement('input');
+  input.id = 'fpTextOverlay';
+  input.type = 'text';
+  input.className = 'fp-text-input-overlay';
+  input.placeholder = '輸入文字... Type here...';
+  input.style.left = (canvasX) + 'px';
+  input.style.top  = (canvasY - 18) + 'px';
+  input.style.fontSize = Math.round(15 / fpZoom) + 'px';
+
+  // Place inside fpCanvas so it moves/scales with the canvas zoom
+  fpCanvas.appendChild(input);
+  input.focus();
+
+  function commit() {
+    const text = input.value.trim();
+    input.remove();
+    if (!text) return;
+    fpSaveStrokeSnapshot();
+    fpDrawCtx.globalCompositeOperation = 'source-over';
+    fpDrawCtx.fillStyle = fpDrawColor;
+    fpDrawCtx.font = `bold 18px -apple-system, "PingFang TC", sans-serif`;
+    fpDrawCtx.fillText(text, canvasX, canvasY);
+  }
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { input.remove(); }
+  });
+  input.addEventListener('blur', () => {
+    // Small delay so a tap on a button doesn't immediately commit with empty text
+    setTimeout(commit, 150);
+  });
+}
+
+function fpSaveStrokeSnapshot() {
+  fpStrokeHistory.push(fpDrawCtx.getImageData(0, 0, fpDrawCanvas.width, fpDrawCanvas.height));
+  if (fpStrokeHistory.length > 25) fpStrokeHistory.shift();
+}
+
+function fpCanvasPoint(e) {
+  const rect = fpDrawCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / fpZoom;
+  const y = (e.clientY - rect.top) / fpZoom;
+  return { x, y };
+}
+
+fpDrawCanvas.addEventListener('pointerdown', (e) => {
+  if (fpMode !== 'draw') return;
+
+  // Text tool: tap to place an inline input, then stamp text onto canvas on confirm
+  if (!fpEraserOn && fpDrawTool === 'text') {
+    e.preventDefault();
+    const pt = fpCanvasPoint(e);
+    fpPlaceTextInput(pt.x, pt.y);
+    return;
+  }
+
+  fpSaveStrokeSnapshot();
+  fpIsDrawing = true;
+  fpShapeStart = fpCanvasPoint(e);
+  fpLastPoint = fpShapeStart;
+  e.preventDefault();
+});
+
+fpDrawCanvas.addEventListener('pointermove', (e) => {
+  if (fpMode !== 'draw' || !fpIsDrawing) return;
+  const pt = fpCanvasPoint(e);
+
+  if (fpEraserOn) {
+    // Eraser: continuous stroke, no preview needed
+    fpDrawCtx.globalCompositeOperation = 'destination-out';
+    fpDrawCtx.lineWidth = 26;
+    fpDrawCtx.beginPath();
+    fpDrawCtx.moveTo(fpLastPoint.x, fpLastPoint.y);
+    fpDrawCtx.lineTo(pt.x, pt.y);
+    fpDrawCtx.stroke();
+    fpLastPoint = pt;
+  } else if (fpDrawTool === 'pen') {
+    // Freehand: continuous stroke
+    fpDrawCtx.globalCompositeOperation = 'source-over';
+    fpDrawCtx.strokeStyle = fpDrawColor;
+    fpDrawCtx.lineWidth = 5;
+    fpDrawCtx.beginPath();
+    fpDrawCtx.moveTo(fpLastPoint.x, fpLastPoint.y);
+    fpDrawCtx.lineTo(pt.x, pt.y);
+    fpDrawCtx.stroke();
+    fpLastPoint = pt;
+  } else if (fpDrawTool === 'line' || fpDrawTool === 'rect') {
+    // Line / rect: restore snapshot on every move to clear last preview,
+    // then draw the current shape from start → current pointer position.
+    const snapshot = fpStrokeHistory[fpStrokeHistory.length - 1];
+    if (snapshot) fpDrawCtx.putImageData(snapshot, 0, 0);
+    fpDrawCtx.globalCompositeOperation = 'source-over';
+    fpDrawCtx.strokeStyle = fpDrawColor;
+    fpDrawCtx.lineWidth = 5;
+    fpDrawCtx.beginPath();
+    if (fpDrawTool === 'line') {
+      fpDrawCtx.moveTo(fpShapeStart.x, fpShapeStart.y);
+      fpDrawCtx.lineTo(pt.x, pt.y);
+      fpDrawCtx.stroke();
+    } else {
+      const w = pt.x - fpShapeStart.x;
+      const h = pt.y - fpShapeStart.y;
+      fpDrawCtx.strokeRect(fpShapeStart.x, fpShapeStart.y, w, h);
+    }
+  }
+  e.preventDefault();
+});
+
+fpDrawCanvas.addEventListener('pointerup', (e) => {
+  if (!fpIsDrawing) return;
+  // For line/rect: commit the final shape at the release point.
+  // The preview loop already drew it on the last pointermove, so we just
+  // need to make sure it's drawn at the exact release point too.
+  if (fpMode === 'draw' && !fpEraserOn && (fpDrawTool === 'line' || fpDrawTool === 'rect') && fpShapeStart) {
+    const pt = fpCanvasPoint(e);
+    const snapshot = fpStrokeHistory[fpStrokeHistory.length - 1];
+    if (snapshot) fpDrawCtx.putImageData(snapshot, 0, 0);
+    fpDrawCtx.globalCompositeOperation = 'source-over';
+    fpDrawCtx.strokeStyle = fpDrawColor;
+    fpDrawCtx.lineWidth = 5;
+    fpDrawCtx.beginPath();
+    if (fpDrawTool === 'line') {
+      fpDrawCtx.moveTo(fpShapeStart.x, fpShapeStart.y);
+      fpDrawCtx.lineTo(pt.x, pt.y);
+      fpDrawCtx.stroke();
+    } else {
+      fpDrawCtx.strokeRect(fpShapeStart.x, fpShapeStart.y, pt.x - fpShapeStart.x, pt.y - fpShapeStart.y);
+    }
+    // Save the committed shape as a new undo snapshot so it can be undone.
+    fpSaveStrokeSnapshot();
+  }
+  fpIsDrawing = false;
+  fpLastPoint = null;
+  fpShapeStart = null;
+});
+
+fpDrawCanvas.addEventListener('pointerleave', () => {
+  // If the pointer leaves mid-shape (e.g. dragged off canvas), commit what
+  // was last drawn — better than silently discarding the shape.
+  fpIsDrawing = false;
+  fpLastPoint = null;
+  fpShapeStart = null;
+});
+
+document.getElementById('fpUndoBtn').addEventListener('click', () => {
+  if (fpStrokeHistory.length === 0) return;
+  const last = fpStrokeHistory.pop();
+  fpDrawCtx.putImageData(last, 0, 0);
+});
+
+/* ---- Export: composite background + drawing + stickers into one PNG, save to Photos ---- */
+function fpDrawStickerToExportCanvas(ctx, s) {
+  return new Promise((resolve) => {
+    if (s.type === 'room') {
+      const cx = s.x, cy = s.y, r = 17;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#d63b2f';
+      ctx.stroke();
+      ctx.fillStyle = '#d63b2f';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(s.label, cx, cy + 2);
+      ctx.restore();
+      resolve();
+      return;
+    }
+    const svgBodies = {
+      indoor: `<rect x="4" y="20" width="52" height="18" rx="4" fill="#7fc4e8" stroke="#4a9bc4" stroke-width="2"/><rect x="8" y="25" width="44" height="3" fill="#ffffff" opacity="0.7"/><rect x="8" y="30" width="30" height="2.5" fill="#4a9bc4" opacity="0.6"/><circle cx="48" cy="29" r="2" fill="#1a46a0"/>`,
+      outdoor: `<rect x="14" y="8" width="32" height="44" rx="3" fill="#1e3a6e" stroke="#152a52" stroke-width="2"/><circle cx="30" cy="22" r="9" fill="none" stroke="#7fa8d8" stroke-width="2"/><circle cx="30" cy="22" r="3" fill="#7fa8d8"/><circle cx="30" cy="40" r="9" fill="none" stroke="#7fa8d8" stroke-width="2"/><circle cx="30" cy="40" r="3" fill="#7fa8d8"/>`,
+      brick: `<rect x="4" y="34" width="24" height="13" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/><rect x="32" y="34" width="24" height="13" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/><rect x="4" y="18" width="11" height="13" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/><rect x="19" y="18" width="24" height="13" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/><rect x="47" y="18" width="9" height="13" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/><line x1="4" y1="33" x2="56" y2="33" stroke="#8a3f18" stroke-width="1.5"/><line x1="30" y1="34" x2="30" y2="47" stroke="#8a3f18" stroke-width="1.5"/>`,
+      flashing: `<rect x="8" y="22" width="44" height="32" rx="2" fill="#b03a2e" stroke="#7b1f15" stroke-width="1.5"/><rect x="10" y="24" width="40" height="28" rx="1.5" fill="none" stroke="#e88070" stroke-width="1" opacity="0.5"/><ellipse cx="30" cy="34" rx="13" ry="9" fill="#c0392b" stroke="#7b1f15" stroke-width="1"/><ellipse cx="30" cy="32" rx="10" ry="7" fill="#c0392b" stroke="#7b1f15" stroke-width="1"/><ellipse cx="30" cy="30" rx="7" ry="5" fill="#c0392b" stroke="#7b1f15" stroke-width="1"/><rect x="26" y="4" width="8" height="26" rx="3" fill="#d0ccc8" stroke="#999" stroke-width="1.5"/>`,
+    };
+    const body = svgBodies[s.type] || svgBodies.indoor;
+    const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">${body}</svg>`;
+    const img = new Image();
+    img.onload = () => {
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      ctx.rotate(s.rotation * Math.PI / 180);
+      ctx.drawImage(img, -23, -23, 45, 45);
+      ctx.restore();
+      resolve();
+    };
+    img.onerror = () => resolve();
+    img.src = 'data:image/svg+xml;base64,' + btoa(svgMarkup);
+  });
+}
+
+async function fpExportImage() {
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width = fpCanvasWidth;
+  exportCanvas.height = fpCanvasHeight;
+  const ctx = exportCanvas.getContext('2d');
+
+  // 1. background
+  ctx.fillStyle = '#e8edf5';
+  ctx.fillRect(0, 0, fpCanvasWidth, fpCanvasHeight);
+  if (fpBgImageSrc) {
+    await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, fpCanvasWidth, fpCanvasHeight);
+        resolve();
+      };
+      img.onerror = () => resolve();
+      img.src = fpBgImageSrc;
+    });
+  }
+
+  // 2. hand-drawn strokes
+  ctx.drawImage(fpDrawCanvas, 0, 0);
+
+  // 3. stickers (sequentially, since each may need to load an offscreen image)
+  for (const s of fpStickers) {
+    await fpDrawStickerToExportCanvas(ctx, s);
+  }
+
+  return exportCanvas;
+}
+
+document.getElementById('fpExportBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('fpExportBtn');
+  const originalText = btn.textContent;
+  btn.textContent = '處理中… Processing…';
+  btn.disabled = true;
+  try {
+    const exportCanvas = await fpExportImage();
+    const dataUrl = exportCanvas.toDataURL('image/png');
+
+    // Show the result directly on-page as a real <img>. This works reliably
+    // even inside a sandboxed preview (like an Artifact iframe), where
+    // window.open() / blob navigation / forced downloads are often blocked
+    // or rerouted. A visible <img> supports native long-press "Save Image"
+    // (iOS) or long-press "Download image" (Android) without any of that.
+    let modal = document.getElementById('fpExportModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'fpExportModal';
+      modal.className = 'fp-export-modal';
+      modal.innerHTML = `
+        <div class="fp-export-modal-inner">
+          <div class="fp-export-modal-head">
+            <div>長按下方圖片，選「儲存影像」即可存入相簿 Long-press the image below, choose "Save Image" to add to Photos</div>
+            <button id="fpExportModalClose">✕ 關閉 Close</button>
+          </div>
+          <div class="fp-export-modal-imgwrap">
+            <img id="fpExportModalImg">
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+      document.getElementById('fpExportModalClose').addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+    }
+    document.getElementById('fpExportModalImg').src = dataUrl;
+    modal.style.display = 'flex';
+  } catch (err) {
+    alert('匯出失敗，請稍後再試。 Export failed, please try again.');
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+});
+
+fpSetMode('move');
+fpRenderCanvas();
+</script>
+</body>
+</html>
