@@ -1628,6 +1628,12 @@
     <h2>⚡ 快速模式 Quick Mode</h2>
     <div class="qm-sub">選完直接產生 WeChat 報告 Skip full assessment, go straight to report</div>
 
+    <div class="qm-label">客戶名 Customer Name <span style="font-weight:400;opacity:0.6">（選填 Optional）</span></div>
+    <input type="text" id="qmCustomerName" placeholder="輸入客戶名..." style="width:100%;border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:14px;background:var(--paper);">
+
+    <div class="qm-label">地址 Address</div>
+    <input type="text" id="qmAddress" placeholder="輸入地址..." style="width:100%;border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:14px;background:var(--paper);">
+
     <div class="qm-label">一拖幾 Number of units</div>
     <div class="qm-options" id="qmCountOpts">
       <div class="qm-opt" data-qmcount="4">4台<br><span style="font-size:10px;font-weight:400">units</span></div>
@@ -2607,6 +2613,10 @@ function renderHub() {
         <div class="overall-pct">${overall}%</div>
       </div>
     </div>
+    <div class="quick-mode-cta">
+      <button id="quickModeBtn">⚡ 快速模式 Quick Mode</button>
+      <div class="quick-mode-hint">只選一拖幾，直接產生報告 Select unit count only, skip to report</div>
+    </div>
     <div class="hub-head">
       <div class="h1">點選任一區塊開始填寫 Tap any section to start</div>
       <div class="h2">不限順序，可隨時切換區塊；每塊會顯示完成度 Any order, switch sections anytime; each shows % complete</div>
@@ -2617,10 +2627,6 @@ function renderHub() {
       <button id="viewResultsBtn" ${overall < 100 ? 'disabled' : ''}>
         ${overall === 100 ? `結束 inspection End Inspection ${allWarnings.length > 0 ? `(⚠ ${allWarnings.length}項限制 ${allWarnings.length} limitation(s))` : ''}` : `尚有未完成項目 Items remaining (${overall}%)`}
       </button>
-    </div>
-    <div class="quick-mode-cta">
-      <button id="quickModeBtn">⚡ 快速模式 Quick Mode</button>
-      <div class="quick-mode-hint">只選一拖幾，直接產生報告 Select unit count only, skip to report</div>
     </div>
     <div style="height:30px"></div>
   `;
@@ -2641,9 +2647,13 @@ function attachHubEvents() {
   const qmBtn = document.getElementById('quickModeBtn');
   if (qmBtn) {
     qmBtn.addEventListener('click', () => {
-      // Reset selections
       document.querySelectorAll('.qm-opt').forEach(o => o.classList.remove('selected'));
       document.getElementById('qmConfirmBtn').disabled = true;
+      // Pre-fill from existing state if already entered
+      const nameEl = document.getElementById('qmCustomerName');
+      const addrEl = document.getElementById('qmAddress');
+      if (nameEl) nameEl.value = state.answers['customer_name'] || '';
+      if (addrEl) addrEl.value = state.answers['address'] || '';
       document.getElementById('quickModalOverlay').classList.add('open');
     });
   }
@@ -2713,6 +2723,11 @@ function attachHubEvents() {
 
   document.getElementById('qmConfirmBtn').addEventListener('click', () => {
     if (!qmCount || !qmType) return;
+    // Save customer info from modal inputs
+    const nameInput = document.getElementById('qmCustomerName');
+    const addrInput = document.getElementById('qmAddress');
+    if (nameInput && nameInput.value.trim()) state.answers['customer_name'] = nameInput.value.trim();
+    if (addrInput && addrInput.value.trim()) state.answers['address'] = addrInput.value.trim();
     state.answers['indoor_count'] = qmCount;
     state.answers['system_type'] = qmType;
     // Save the combo selection (same format as the full questionnaire)
