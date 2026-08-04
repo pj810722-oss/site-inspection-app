@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
 <title>空調安裝現場評估 AC Installation Site Inspection</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root {
     /* ── Brand palette ─────────────────────────────────────────────
@@ -1621,9 +1622,38 @@
     background: #ccc;
     cursor: not-allowed;
   }
+  .cal-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .cal-item {
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    background: var(--paper);
+    text-align: left;
+  }
+  .cal-item:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .cal-item .cal-time { font-family: var(--mono); font-size: 11.5px; color: var(--accent); font-weight: 700; }
+  .cal-item .cal-summary { font-size: 15px; font-weight: 700; margin-top: 3px; }
+  .cal-item .cal-loc { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .cal-empty { text-align: center; color: var(--muted); font-size: 13px; padding: 20px 10px; }
+  .cal-status { text-align: center; color: var(--muted); font-size: 13px; padding: 20px 10px; }
+  .cal-error { text-align: center; color: var(--warn); font-size: 12.5px; padding: 10px; }
 </style>
 </head>
 <body>
+<!-- Today's Schedule (Google Calendar) Modal -->
+<div class="quick-modal-overlay" id="calModalOverlay">
+  <div class="quick-modal">
+    <h2>📅 今日行程 Today's Schedule</h2>
+    <div class="qm-sub">選一個行程，自動帶入客戶名與地址 Pick an event to auto-fill customer name & address</div>
+    <div id="calModalBody">
+      <div class="cal-status">載入中... Loading...</div>
+    </div>
+    <div class="qm-actions">
+      <button class="qm-cancel" id="calCancelBtn" style="flex:1">關閉 Close</button>
+    </div>
+  </div>
+</div>
 <!-- Quick Mode Modal -->
 <div class="quick-modal-overlay" id="quickModalOverlay">
   <div class="quick-modal">
@@ -2625,6 +2655,7 @@ function renderHub() {
       </div>
     </div>
     <div class="quick-mode-cta">
+      <button id="todayScheduleBtn" style="border-color:var(--green);color:var(--green);margin-bottom:8px;">📅 今日行程 Today's Schedule</button>
       <button id="quickModeBtn">⚡ 快速模式 Quick Mode</button>
       <div class="quick-mode-hint">只選一拖幾，直接產生報告 Select unit count only, skip to report</div>
     </div>
@@ -2655,6 +2686,12 @@ function attachHubEvents() {
     state.view = "results";
     render();
   });
+  const todayBtn = document.getElementById('todayScheduleBtn');
+  if (todayBtn) {
+    todayBtn.addEventListener('click', () => {
+      openTodaySchedule();
+    });
+  }
   const qmBtn = document.getElementById('quickModeBtn');
   if (qmBtn) {
     qmBtn.addEventListener('click', () => {
@@ -4250,6 +4287,145 @@ document.getElementById('fpExportBtn').addEventListener('click', async () => {
 
 fpSetMode('move');
 fpRenderCanvas();
+
+/* ================= Google Calendar "Today's Schedule" integration =================
+   Setup: create a free Google OAuth Client ID (Web application type) in Google Cloud
+   Console, add this site's URL to "Authorized JavaScript origins", then paste the
+   Client ID below. No client secret is needed for this client-side flow. */
+const GOOGLE_CLIENT_ID = '391350365896-gqhb60ipbccl33hjvh76rqh3hr5qtrdh.apps.googleusercontent.com'; // <-- 換成你自己的 Client ID
+const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+
+let gcalTokenClient = null;
+let gcalAccessToken = null;
+
+function gcalEnsureTokenClient() {
+  if (gcalTokenClient) return gcalTokenClient;
+  if (!window.google || !google.accounts || !google.accounts.oauth2) return null;
+  gcalTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: GCAL_SCOPE,
+    callback: () => {}, // overridden per-request below
+  });
+  return gcalTokenClient;
+}
+
+function openTodaySchedule() {
+  document.getElementById('calModalBody').innerHTML = '<div class="cal-status">載入中... Loading...</div>';
+  document.getElementById('calModalOverlay').classList.add('open');
+
+  if (GOOGLE_CLIENT_ID.indexOf('YOUR_CLIENT_ID') === 0) {
+    document.getElementById('calModalBody').innerHTML =
+      '<div class="cal-error">尚未設定 Google Client ID。請依照說明申請並填入程式碼中的 GOOGLE_CLIENT_ID。<br>Google Client ID not configured yet — see setup instructions.</div>';
+    return;
+  }
+
+  const client = gcalEnsureTokenClient();
+  if (!client) {
+    document.getElementById('calModalBody').innerHTML =
+      '<div class="cal-error">Google 登入元件尚未載入，請稍後再試。 Google sign-in not loaded yet, please retry.</div>';
+    return;
+  }
+
+  client.callback = (resp) => {
+    if (resp.error) {
+      document.getElementById('calModalBody').innerHTML =
+        '<div class="cal-error">Google 登入失敗或被取消。 Google sign-in failed or was cancelled.</div>';
+      return;
+    }
+    gcalAccessToken = resp.access_token;
+    gcalFetchTodayEvents();
+  };
+
+  if (gcalAccessToken) {
+    gcalFetchTodayEvents();
+  } else {
+    client.requestAccessToken({ prompt: '' });
+  }
+}
+
+function gcalFetchTodayEvents() {
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+  const url = 'https://www.googleapis.com/calendar/v3/calendars/primary/events'
+    + '?timeMin=' + encodeURIComponent(startOfDay.toISOString())
+    + '&timeMax=' + encodeURIComponent(endOfDay.toISOString())
+    + '&singleEvents=true&orderBy=startTime';
+
+  fetch(url, { headers: { Authorization: 'Bearer ' + gcalAccessToken } })
+    .then(r => {
+      if (r.status === 401) {
+        gcalAccessToken = null;
+        throw new Error('unauthorized');
+      }
+      if (!r.ok) throw new Error('http ' + r.status);
+      return r.json();
+    })
+    .then(data => {
+      gcalRenderEventList(data.items || []);
+    })
+    .catch(err => {
+      if (err.message === 'unauthorized') {
+        const client = gcalEnsureTokenClient();
+        if (client) {
+          client.callback = (resp) => {
+            if (resp.error) {
+              document.getElementById('calModalBody').innerHTML =
+                '<div class="cal-error">Google 登入失敗或被取消。 Google sign-in failed or was cancelled.</div>';
+              return;
+            }
+            gcalAccessToken = resp.access_token;
+            gcalFetchTodayEvents();
+          };
+          client.requestAccessToken({ prompt: '' });
+        }
+        return;
+      }
+      document.getElementById('calModalBody').innerHTML =
+        '<div class="cal-error">讀取日曆失敗，請稍後再試。 Failed to load calendar, please retry.<br>' + (err.message || '') + '</div>';
+    });
+}
+
+function gcalRenderEventList(events) {
+  const body = document.getElementById('calModalBody');
+  if (!events.length) {
+    body.innerHTML = '<div class="cal-empty">今天沒有行程 No events today</div>';
+    return;
+  }
+  body.innerHTML = '<div class="cal-list">' + events.map((ev, i) => {
+    let timeLabel = '';
+    if (ev.start && ev.start.dateTime) {
+      const d = new Date(ev.start.dateTime);
+      timeLabel = d.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+    } else if (ev.start && ev.start.date) {
+      timeLabel = '全天 All day';
+    }
+    const summary = (ev.summary || '（無標題 No title）').replace(/</g, '&lt;');
+    const loc = (ev.location || '').replace(/</g, '&lt;');
+    return `
+      <div class="cal-item" data-idx="${i}">
+        <div class="cal-time">${timeLabel}</div>
+        <div class="cal-summary">${summary}</div>
+        ${loc ? `<div class="cal-loc">📍 ${loc}</div>` : ''}
+      </div>`;
+  }).join('') + '</div>';
+
+  body.querySelectorAll('.cal-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.getAttribute('data-idx'), 10);
+      const ev = events[idx];
+      state.answers['customer_name'] = ev.summary || '';
+      state.answers['address'] = ev.location || '';
+      document.getElementById('calModalOverlay').classList.remove('open');
+      render();
+    });
+  });
+}
+
+document.getElementById('calCancelBtn').addEventListener('click', () => {
+  document.getElementById('calModalOverlay').classList.remove('open');
+});
 </script>
 </body>
 </html>
