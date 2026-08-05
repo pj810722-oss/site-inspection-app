@@ -3931,13 +3931,16 @@ document.getElementById('fpClearBtn').addEventListener('click', () => {
     fpStrokeHistory = [];
     fpIsDrawing = false;
     fpShapeStart = null;
-    // Clear BEFORE resizing — fpResizeCanvasTo preserves existing strokes
-    // by saving a dataURL, so we must wipe first to prevent them coming back
+    fpPendingSticker = null;
+    fpCancelPlacing();
+    // Force-clear all three canvas layers immediately
+    document.getElementById('fpBgLayer').innerHTML = '';
+    document.getElementById('fpStickerLayer').innerHTML = '';
+    // Clear draw canvas directly (bypasses fpResizeCanvasTo's stroke-preservation)
     fpDrawCanvas.width = 900;
     fpDrawCanvas.height = 650;
     fpDrawCtx.lineCap = 'round';
     fpDrawCtx.lineJoin = 'round';
-    fpDrawCtx.clearRect(0, 0, 900, 650);
     fpCanvasWidth = 900;
     fpCanvasHeight = 650;
     fpCanvas.style.width = '900px';
