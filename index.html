@@ -1055,6 +1055,31 @@
   .fp-collapsed .fp-expand-btn { display: block; }
 
   /* ---- Draw toolbar: mode toggle + color/eraser/undo tools ---- */
+  /* ---- Floor tabs ---- */
+  .fp-floor-tabs {
+    display: flex;
+    gap: 0;
+    background: var(--accent-dark);
+    padding: 6px 10px;
+    gap: 6px;
+  }
+  .fp-floor-tab {
+    flex: 1;
+    padding: 7px 10px;
+    border-radius: 7px;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .fp-floor-tab.active {
+    background: #fff;
+    color: var(--accent-dark);
+    border-color: #fff;
+  }
+
   .fp-drawbar {
     flex: 0 0 auto;
     background: var(--panel);
@@ -1709,6 +1734,10 @@
         <button id="fpClearBtn">清空 Clear</button>
         <button class="fp-collapse-btn" id="fpCollapseBtn">收合 Collapse ‹</button>
       </div>
+    </div>
+    <div class="fp-floor-tabs">
+      <button class="fp-floor-tab active" id="fpFloorGround" data-floor="0">🏠 樓下 Ground</button>
+      <button class="fp-floor-tab" id="fpFloorUpper" data-floor="1">🏢 樓上 Upper</button>
     </div>
     <div class="fp-drawbar" id="fpDrawbar">
       <button class="fp-mode-btn" id="fpModeMove" data-active="true">✋ 移動 Move</button>
@@ -3437,24 +3466,33 @@ render();
 /* =======================================================================
    平面圖標註模組（獨立於問卷狀態，左側常駐面板）
 ========================================================================= */
-let fpStickers = [];
+let fpFloor = 0; // 0 = Ground, 1 = Upper
+let fpFloors = [
+  { bgImageSrc: null, stickers: [], canvasData: null, canvasWidth: 900, canvasHeight: 650 },
+  { bgImageSrc: null, stickers: [], canvasData: null, canvasWidth: 900, canvasHeight: 650 },
+];
+
+// Convenience getters that always point to the active floor
+function fpFloorData() { return fpFloors[fpFloor]; }
+Object.defineProperty(window, 'fpStickers',    { get: () => fpFloors[fpFloor].stickers,     set: v => { fpFloors[fpFloor].stickers = v; } });
+Object.defineProperty(window, 'fpBgImageSrc',  { get: () => fpFloors[fpFloor].bgImageSrc,   set: v => { fpFloors[fpFloor].bgImageSrc = v; } });
+Object.defineProperty(window, 'fpCanvasWidth', { get: () => fpFloors[fpFloor].canvasWidth,  set: v => { fpFloors[fpFloor].canvasWidth = v; } });
+Object.defineProperty(window, 'fpCanvasHeight',{ get: () => fpFloors[fpFloor].canvasHeight, set: v => { fpFloors[fpFloor].canvasHeight = v; } });
+
 let fpNextId = 1;
 let fpNextRoomNum = 1;
 let fpSelectedId = null;
 let fpDragState = null;
 let fpRotateState = null;
-let fpBgImageSrc = null;
-let fpCanvasWidth = 900;
-let fpCanvasHeight = 650;
 let fpZoom = 1; // 1 = 100%
 let fpPinchState = null; // {startDist, startZoom}
 let fpMode = 'move'; // 'move' | 'draw'
-let fpPendingSticker = null; // 'indoor' | 'outdoor' | 'room' — type waiting to be placed on tap
+let fpPendingSticker = null;
 let fpDrawColor = '#1e3a6e';
 let fpEraserOn = false;
 let fpDrawTool = 'pen'; // 'pen' | 'line' | 'rect'
-let fpShapeStart = null; // {x, y} start point for line/rect preview
-let fpStrokeHistory = []; // array of ImageData snapshots for undo
+let fpShapeStart = null;
+let fpStrokeHistory = []; // per-switch history cleared on floor change
 let fpIsDrawing = false;
 let fpLastPoint = null;
 
@@ -3793,8 +3831,12 @@ document.getElementById('fpClearBtn').addEventListener('click', () => {
   document.getElementById('fpClearNo').addEventListener('click', () => banner.remove());
   document.getElementById('fpClearYes').addEventListener('click', () => {
     banner.remove();
-    fpStickers = [];
-    fpBgImageSrc = null;
+    // Clear both floors
+    fpFloors = [
+      { bgImageSrc: null, stickers: [], canvasData: null, canvasWidth: 900, canvasHeight: 650 },
+      { bgImageSrc: null, stickers: [], canvasData: null, canvasWidth: 900, canvasHeight: 650 },
+    ];
+    fpFloor = 0;
     fpNextRoomNum = 1;
     fpSelectedId = null;
     fpResizeCanvasTo(900, 650);
@@ -3802,6 +3844,10 @@ document.getElementById('fpClearBtn').addEventListener('click', () => {
     fpStrokeHistory = [];
     fpIsDrawing = false;
     fpShapeStart = null;
+    // Reset floor tabs
+    document.querySelectorAll('.fp-floor-tab').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-floor') === '0');
+    });
     fpRenderCanvas();
   });
 });
@@ -3865,6 +3911,42 @@ fpCanvasWrap.addEventListener('touchend', (e) => {
 }, { passive: true });
 
 /* ---- Drawing: freehand strokes with color picker + eraser + undo ---- */
+function fpSaveCurrentFloorCanvas() {
+  // Save the current draw canvas pixels into the floor data before switching
+  fpFloors[fpFloor].canvasData = fpDrawCtx.getImageData(0, 0, fpDrawCanvas.width, fpDrawCanvas.height);
+}
+
+function fpSwitchFloor(floorIndex) {
+  if (floorIndex === fpFloor) return;
+  fpSaveCurrentFloorCanvas();
+  fpFloor = floorIndex;
+  fpSelectedId = null;
+  fpStrokeHistory = [];
+  fpIsDrawing = false;
+  fpShapeStart = null;
+  fpZoom = 1;
+  fpApplyZoom(false);
+
+  // Restore new floor's canvas
+  const floor = fpFloors[fpFloor];
+  fpResizeCanvasTo(floor.canvasWidth, floor.canvasHeight);
+  if (floor.canvasData) {
+    fpDrawCtx.putImageData(floor.canvasData, 0, 0);
+  } else {
+    fpDrawCtx.clearRect(0, 0, fpDrawCanvas.width, fpDrawCanvas.height);
+  }
+
+  // Update tab UI
+  document.querySelectorAll('.fp-floor-tab').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.getAttribute('data-floor')) === fpFloor);
+  });
+
+  fpRenderCanvas();
+}
+
+document.getElementById('fpFloorGround').addEventListener('click', () => fpSwitchFloor(0));
+document.getElementById('fpFloorUpper').addEventListener('click', () => fpSwitchFloor(1));
+
 function fpSetMode(mode) {
   const ov = document.getElementById('fpTextOverlay');
   if (ov) ov.remove();
@@ -4128,8 +4210,42 @@ function fpDrawStickerToExportCanvas(ctx, s) {
   });
 }
 
+async function fpRenderFloorToCanvas(floorIdx, targetCtx, offsetY, floorW, floorH) {
+  const floor = fpFloors[floorIdx];
+
+  // background
+  targetCtx.fillStyle = '#e8edf5';
+  targetCtx.fillRect(0, offsetY, floorW, floorH);
+  if (floor.bgImageSrc) {
+    await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => { targetCtx.drawImage(img, 0, offsetY, floorW, floorH); resolve(); };
+      img.onerror = () => resolve();
+      img.src = floor.bgImageSrc;
+    });
+  }
+
+  // hand-drawn strokes — use saved canvasData if not current floor
+  if (floorIdx === fpFloor) {
+    targetCtx.drawImage(fpDrawCanvas, 0, offsetY);
+  } else if (floor.canvasData) {
+    const tmpCanvas = document.createElement('canvas');
+    tmpCanvas.width = floorW; tmpCanvas.height = floorH;
+    tmpCanvas.getContext('2d').putImageData(floor.canvasData, 0, 0);
+    targetCtx.drawImage(tmpCanvas, 0, offsetY);
+  }
+
+  // stickers
+  for (const s of floor.stickers) {
+    const shifted = { ...s, y: s.y + offsetY };
+    await fpDrawStickerToExportCanvas(targetCtx, shifted);
+  }
+}
+
 async function fpExportImage() {
-  // Legend entries — every sticker type with its meaning
+  // Save current floor's canvas data before exporting
+  fpSaveCurrentFloorCanvas();
+
   const LEGEND = [
     { type: 'indoor',      label: 'Indoor Unit' },
     { type: 'outdoor',     label: 'Outdoor Unit' },
@@ -4148,54 +4264,66 @@ async function fpExportImage() {
   const PAD = 16;
   const LABEL_FONT = '12px -apple-system, Arial, sans-serif';
   const ROWS = Math.ceil(LEGEND.length / COLS);
-  const COL_W = Math.floor(fpCanvasWidth / COLS);
-  const legendH = PAD + 28 + ROWS * ROW_H + PAD; // header + rows + padding
+  const FLOOR_LABEL_H = 32; // height of "Ground Floor" / "Upper Floor" label bar
+
+  // Determine which floors have content
+  const hasUpper = fpFloors[1].bgImageSrc || fpFloors[1].stickers.length > 0 || fpFloors[1].canvasData;
+  const groundW = fpFloors[0].canvasWidth;
+  const groundH = fpFloors[0].canvasHeight;
+  const upperW  = fpFloors[1].canvasWidth;
+  const upperH  = fpFloors[1].canvasHeight;
+  const totalW = Math.max(groundW, hasUpper ? upperW : 0, 400);
+
+  const legendH = PAD + 28 + ROWS * ROW_H + PAD;
+  const totalH = (FLOOR_LABEL_H + groundH) + (hasUpper ? FLOOR_LABEL_H + upperH + 6 : 0) + legendH;
 
   const exportCanvas = document.createElement('canvas');
-  exportCanvas.width = fpCanvasWidth;
-  exportCanvas.height = fpCanvasHeight + legendH;
+  exportCanvas.width = totalW;
+  exportCanvas.height = totalH;
   const ctx = exportCanvas.getContext('2d');
-
-  // 1. floor plan background
   ctx.fillStyle = '#e8edf5';
-  ctx.fillRect(0, 0, fpCanvasWidth, fpCanvasHeight);
-  if (fpBgImageSrc) {
-    await new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => { ctx.drawImage(img, 0, 0, fpCanvasWidth, fpCanvasHeight); resolve(); };
-      img.onerror = () => resolve();
-      img.src = fpBgImageSrc;
-    });
-  }
+  ctx.fillRect(0, 0, totalW, totalH);
 
-  // 2. hand-drawn strokes
-  ctx.drawImage(fpDrawCanvas, 0, 0);
-
-  // 3. stickers
-  for (const s of fpStickers) {
-    await fpDrawStickerToExportCanvas(ctx, s);
-  }
-
-  // 4. legend panel
-  const panelY = fpCanvasHeight;
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, panelY, fpCanvasWidth, legendH);
-
-  // blue top border
+  // ── Ground Floor ──
   ctx.fillStyle = '#1a46a0';
-  ctx.fillRect(0, panelY, fpCanvasWidth, 4);
-
-  // header
-  ctx.fillStyle = '#1a46a0';
+  ctx.fillRect(0, 0, totalW, FLOOR_LABEL_H);
+  ctx.fillStyle = '#fff';
   ctx.font = 'bold 14px -apple-system, Arial, sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   const customer = state.answers['customer_name'] || '';
   const addr = state.answers['address'] || '';
-  const headerText = [customer, addr].filter(Boolean).join('  |  ');
-  ctx.fillText('📐 Symbol Key' + (headerText ? '  |  ' + headerText : ''), PAD, panelY + PAD + 10);
+  const info = [customer, addr].filter(Boolean).join('  |  ');
+  ctx.fillText('🏠 Ground Floor' + (info ? '  —  ' + info : ''), PAD, FLOOR_LABEL_H / 2);
+  await fpRenderFloorToCanvas(0, ctx, FLOOR_LABEL_H, groundW, groundH);
 
-  // legend items — load each SVG icon and draw alongside label
+  // ── Upper Floor (if has content) ──
+  let upperOffsetY = FLOOR_LABEL_H + groundH;
+  if (hasUpper) {
+    upperOffsetY += 6;
+    ctx.fillStyle = '#0f2d72';
+    ctx.fillRect(0, upperOffsetY, totalW, FLOOR_LABEL_H);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px -apple-system, Arial, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🏢 Upper Floor', PAD, upperOffsetY + FLOOR_LABEL_H / 2);
+    await fpRenderFloorToCanvas(1, ctx, upperOffsetY + FLOOR_LABEL_H, upperW, upperH);
+  }
+
+  // ── Symbol Key ──
+  const panelY = totalH - legendH;
+  const COL_W = Math.floor(totalW / COLS);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, panelY, totalW, legendH);
+  ctx.fillStyle = '#1a46a0';
+  ctx.fillRect(0, panelY, totalW, 4);
+  ctx.fillStyle = '#1a46a0';
+  ctx.font = 'bold 14px -apple-system, Arial, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('📐 Symbol Key', PAD, panelY + PAD + 10);
+
   const svgBodies = {
     indoor:      `<rect x="4" y="20" width="52" height="18" rx="4" fill="#7fc4e8" stroke="#4a9bc4" stroke-width="2"/><rect x="8" y="25" width="44" height="3" fill="#ffffff" opacity="0.7"/>`,
     outdoor:     `<rect x="14" y="8" width="32" height="44" rx="3" fill="#1e3a6e" stroke="#152a52" stroke-width="2"/><circle cx="30" cy="22" r="9" fill="none" stroke="#7fa8d8" stroke-width="2"/><circle cx="30" cy="22" r="3" fill="#7fa8d8"/>`,
@@ -4209,20 +4337,16 @@ async function fpExportImage() {
   };
 
   const itemStartY = panelY + PAD + 28;
-
   await Promise.all(LEGEND.map((item, i) => new Promise((resolve) => {
     const col = i % COLS;
     const row = Math.floor(i / COLS);
     const x = col * COL_W + PAD;
     const y = itemStartY + row * ROW_H;
-
     const body = svgBodies[item.type] || '';
     const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">${body}</svg>`;
     const img = new Image();
     img.onload = () => {
       ctx.drawImage(img, x, y + (ROW_H - ICON_SIZE) / 2, ICON_SIZE, ICON_SIZE);
-
-      // label text
       ctx.fillStyle = '#0f1f3d';
       ctx.font = LABEL_FONT;
       ctx.textAlign = 'left';
@@ -4234,9 +4358,8 @@ async function fpExportImage() {
     img.src = 'data:image/svg+xml;base64,' + btoa(svgMarkup);
   })));
 
-  // bottom divider
   ctx.fillStyle = '#d0d8e8';
-  ctx.fillRect(0, panelY + legendH - 1, fpCanvasWidth, 1);
+  ctx.fillRect(0, totalH - 1, totalW, 1);
 
   return exportCanvas;
 }
