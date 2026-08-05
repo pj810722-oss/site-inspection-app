@@ -3928,11 +3928,20 @@ document.getElementById('fpClearBtn').addEventListener('click', () => {
     fpBgImageSrc2 = null;
     fpNextRoomNum = 1;
     fpSelectedId = null;
-    fpResizeCanvasTo(900, 650);
-    fpDrawCtx.clearRect(0, 0, fpDrawCanvas.width, fpDrawCanvas.height);
     fpStrokeHistory = [];
     fpIsDrawing = false;
     fpShapeStart = null;
+    // Clear BEFORE resizing — fpResizeCanvasTo preserves existing strokes
+    // by saving a dataURL, so we must wipe first to prevent them coming back
+    fpDrawCanvas.width = 900;
+    fpDrawCanvas.height = 650;
+    fpDrawCtx.lineCap = 'round';
+    fpDrawCtx.lineJoin = 'round';
+    fpDrawCtx.clearRect(0, 0, 900, 650);
+    fpCanvasWidth = 900;
+    fpCanvasHeight = 650;
+    fpCanvas.style.width = '900px';
+    fpCanvas.style.height = '650px';
     fpRenderCanvas();
   });
 });
