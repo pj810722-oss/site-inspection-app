@@ -1055,31 +1055,6 @@
   .fp-collapsed .fp-expand-btn { display: block; }
 
   /* ---- Draw toolbar: mode toggle + color/eraser/undo tools ---- */
-  /* ---- Floor tabs ---- */
-  .fp-floor-tabs {
-    display: flex;
-    gap: 0;
-    background: var(--accent-dark);
-    padding: 6px 10px;
-    gap: 6px;
-  }
-  .fp-floor-tab {
-    flex: 1;
-    padding: 7px 10px;
-    border-radius: 7px;
-    border: 1.5px solid rgba(255,255,255,0.2);
-    background: transparent;
-    color: rgba(255,255,255,0.6);
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-  .fp-floor-tab.active {
-    background: #fff;
-    color: var(--accent-dark);
-    border-color: #fff;
-  }
-
   .fp-drawbar {
     flex: 0 0 auto;
     background: var(--panel);
@@ -1246,6 +1221,39 @@
     height: 100%;
     max-width: none;
     user-select: none;
+    pointer-events: none;
+  }
+  .fp-bg-split {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    pointer-events: none;
+  }
+  .fp-bg-split-h { flex-direction: row; }
+  .fp-bg-split-v { flex-direction: column; }
+  .fp-bg-half {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+  .fp-bg-image-half {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    user-select: none;
+    pointer-events: none;
+  }
+  .fp-bg-label {
+    position: absolute;
+    top: 4px; left: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: rgba(15,45,114,0.75);
+    padding: 2px 7px;
+    border-radius: 6px;
+    z-index: 2;
     pointer-events: none;
   }
   .fp-tray {
@@ -1735,10 +1743,6 @@
         <button class="fp-collapse-btn" id="fpCollapseBtn">收合 Collapse ‹</button>
       </div>
     </div>
-    <div class="fp-floor-tabs">
-      <button class="fp-floor-tab active" id="fpFloorGround" data-floor="0">🏠 樓下 Ground</button>
-      <button class="fp-floor-tab" id="fpFloorUpper" data-floor="1">🏢 樓上 Upper</button>
-    </div>
     <div class="fp-drawbar" id="fpDrawbar">
       <button class="fp-mode-btn" id="fpModeMove" data-active="true">✋ 移動 Move</button>
       <button class="fp-mode-btn" id="fpModeDraw">✏️ 畫筆 Draw</button>
@@ -1770,8 +1774,12 @@
       <div class="fp-tray">
         <div class="fp-tray-label">底圖 Background</div>
         <label class="fp-upload-btn">
-          📷 上傳底圖 Upload
+          📷 樓下 Ground
           <input type="file" accept="image/*" id="fpBgUpload" style="display:none">
+        </label>
+        <label class="fp-upload-btn" style="margin-top:4px;">
+          📷 樓上 Upper
+          <input type="file" accept="image/*" id="fpBgUpload2" style="display:none">
         </label>
 
         <div class="fp-tray-label">位置 Units</div>
@@ -3466,33 +3474,25 @@ render();
 /* =======================================================================
    平面圖標註模組（獨立於問卷狀態，左側常駐面板）
 ========================================================================= */
-let fpFloor = 0; // 0 = Ground, 1 = Upper
-let fpFloors = [
-  { bgImageSrc: null, stickers: [], canvasData: null, canvasWidth: 900, canvasHeight: 650 },
-  { bgImageSrc: null, stickers: [], canvasData: null, canvasWidth: 900, canvasHeight: 650 },
-];
-
-// Convenience getters that always point to the active floor
-function fpFloorData() { return fpFloors[fpFloor]; }
-Object.defineProperty(window, 'fpStickers',    { get: () => fpFloors[fpFloor].stickers,     set: v => { fpFloors[fpFloor].stickers = v; } });
-Object.defineProperty(window, 'fpBgImageSrc',  { get: () => fpFloors[fpFloor].bgImageSrc,   set: v => { fpFloors[fpFloor].bgImageSrc = v; } });
-Object.defineProperty(window, 'fpCanvasWidth', { get: () => fpFloors[fpFloor].canvasWidth,  set: v => { fpFloors[fpFloor].canvasWidth = v; } });
-Object.defineProperty(window, 'fpCanvasHeight',{ get: () => fpFloors[fpFloor].canvasHeight, set: v => { fpFloors[fpFloor].canvasHeight = v; } });
-
+let fpStickers = [];
 let fpNextId = 1;
 let fpNextRoomNum = 1;
 let fpSelectedId = null;
 let fpDragState = null;
 let fpRotateState = null;
-let fpZoom = 1; // 1 = 100%
-let fpPinchState = null; // {startDist, startZoom}
-let fpMode = 'move'; // 'move' | 'draw'
+let fpBgImageSrc = null;   // first (or only) floor plan image
+let fpBgImageSrc2 = null;  // second floor plan image (optional)
+let fpCanvasWidth = 900;
+let fpCanvasHeight = 650;
+let fpZoom = 1;
+let fpPinchState = null;
+let fpMode = 'move';
 let fpPendingSticker = null;
 let fpDrawColor = '#1e3a6e';
 let fpEraserOn = false;
-let fpDrawTool = 'pen'; // 'pen' | 'line' | 'rect'
+let fpDrawTool = 'pen';
 let fpShapeStart = null;
-let fpStrokeHistory = []; // per-switch history cleared on floor change
+let fpStrokeHistory = [];
 let fpIsDrawing = false;
 let fpLastPoint = null;
 
@@ -3508,14 +3508,55 @@ function fpSvgIcon(type) {
   return `<svg viewBox="0 0 60 60"><use href="#icon-${type}"/></svg>`;
 }
 
+function fpGetOrientation() {
+  // Portrait = stack vertically, Landscape = place side by side
+  return window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
+}
+
 function fpRenderCanvas() {
-  const emptyState = fpBgImageSrc ? '' : `
+  const emptyState = (fpBgImageSrc || fpBgImageSrc2) ? '' : `
     <div class="fp-canvas-empty" id="fpEmptyState">
       <div>📷 上傳底圖開始標註<br>Upload floor plan to start</div>
       <button id="fpEmptyUploadBtn">上傳底圖 Upload</button>
     </div>`;
 
-  const bgHtml = fpBgImageSrc ? `<img src="${fpBgImageSrc}" class="fp-bg-image" id="fpBgImg">` : '';
+  let bgHtml = '';
+  if (fpBgImageSrc && fpBgImageSrc2) {
+    // Two images — arrange based on orientation
+    const orient = fpGetOrientation();
+    if (orient === 'landscape') {
+      // Side by side: each takes 50% width
+      bgHtml = `
+        <div class="fp-bg-split fp-bg-split-h">
+          <div class="fp-bg-half">
+            <div class="fp-bg-label">🏠 Ground</div>
+            <img src="${fpBgImageSrc}" class="fp-bg-image-half">
+          </div>
+          <div class="fp-bg-half">
+            <div class="fp-bg-label">🏢 Upper</div>
+            <img src="${fpBgImageSrc2}" class="fp-bg-image-half">
+          </div>
+        </div>`;
+    } else {
+      // Stacked: each takes 50% height
+      bgHtml = `
+        <div class="fp-bg-split fp-bg-split-v">
+          <div class="fp-bg-half">
+            <div class="fp-bg-label">🏠 Ground</div>
+            <img src="${fpBgImageSrc}" class="fp-bg-image-half">
+          </div>
+          <div class="fp-bg-half">
+            <div class="fp-bg-label">🏢 Upper</div>
+            <img src="${fpBgImageSrc2}" class="fp-bg-image-half">
+          </div>
+        </div>`;
+    }
+  } else if (fpBgImageSrc) {
+    bgHtml = `<img src="${fpBgImageSrc}" class="fp-bg-image" id="fpBgImg">`;
+  } else if (fpBgImageSrc2) {
+    bgHtml = `<img src="${fpBgImageSrc2}" class="fp-bg-image" id="fpBgImg">`;
+  }
+
   document.getElementById('fpBgLayer').innerHTML = emptyState + bgHtml;
 
   const stickersHtml = fpStickers.map(s => {
@@ -3718,23 +3759,74 @@ function fpResizeCanvasTo(width, height) {
   }
 }
 
-function fpHandleBgUpload(file) {
+function fpCalcDualCanvasSize(img1, img2) {
+  // Determine combined canvas size based on orientation
+  const orient = fpGetOrientation();
+  const MAX_W = 1100, MAX_H = 900;
+  if (!img2) {
+    // Single image — normal resize
+    let w = img1.naturalWidth, h = img1.naturalHeight;
+    if (w > MAX_W) { h = h * (MAX_W / w); w = MAX_W; }
+    if (h > MAX_H) { w = w * (MAX_H / h); h = MAX_H; }
+    return { w: Math.round(w), h: Math.round(h) };
+  }
+  if (orient === 'landscape') {
+    // Side by side: width = sum of both (capped), height = max
+    const scale = Math.min(MAX_W / (img1.naturalWidth + img2.naturalWidth), MAX_H / Math.max(img1.naturalHeight, img2.naturalHeight), 1);
+    return { w: Math.round((img1.naturalWidth + img2.naturalWidth) * scale), h: Math.round(Math.max(img1.naturalHeight, img2.naturalHeight) * scale) };
+  } else {
+    // Stacked: height = sum, width = max
+    const scale = Math.min(MAX_W / Math.max(img1.naturalWidth, img2.naturalWidth), MAX_H / (img1.naturalHeight + img2.naturalHeight), 1);
+    return { w: Math.round(Math.max(img1.naturalWidth, img2.naturalWidth) * scale), h: Math.round((img1.naturalHeight + img2.naturalHeight) * scale) };
+  }
+}
+
+function fpHandleBgUpload(file, slot) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
-    fpBgImageSrc = e.target.result;
-    const img = new Image();
-    img.onload = () => {
-      fpResizeCanvasTo(img.naturalWidth, img.naturalHeight);
+    if (slot === 2) {
+      fpBgImageSrc2 = e.target.result;
+    } else {
+      fpBgImageSrc = e.target.result;
+    }
+    // Resize canvas to fit both images
+    const img1 = fpBgImageSrc ? new Image() : null;
+    const img2 = fpBgImageSrc2 ? new Image() : null;
+    let loaded = 0;
+    const onLoad = () => {
+      loaded++;
+      const needed = (img1 ? 1 : 0) + (img2 ? 1 : 0);
+      if (loaded < needed) return;
+      const size = fpCalcDualCanvasSize(img1 || img2, img1 && img2 ? img2 : null);
+      fpResizeCanvasTo(size.w, size.h);
       fpRenderCanvas();
     };
-    img.src = fpBgImageSrc;
+    if (img1) { img1.onload = onLoad; img1.src = fpBgImageSrc; }
+    if (img2) { img2.onload = onLoad; img2.src = fpBgImageSrc2; }
+    if (!img1 && !img2) fpRenderCanvas();
   };
   reader.readAsDataURL(file);
 }
 
 document.getElementById('fpBgUpload').addEventListener('change', (e) => {
-  fpHandleBgUpload(e.target.files[0]);
+  fpHandleBgUpload(e.target.files[0], 1);
+});
+document.getElementById('fpBgUpload2').addEventListener('change', (e) => {
+  fpHandleBgUpload(e.target.files[0], 2);
+});
+
+// Re-render on orientation change so layout switches between stacked/side-by-side
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    if (fpBgImageSrc && fpBgImageSrc2) {
+      const img1 = new Image(), img2 = new Image();
+      let loaded = 0;
+      const onLoad = () => { if (++loaded === 2) { const s = fpCalcDualCanvasSize(img1, img2); fpResizeCanvasTo(s.w, s.h); fpRenderCanvas(); } };
+      img1.onload = onLoad; img1.src = fpBgImageSrc;
+      img2.onload = onLoad; img2.src = fpBgImageSrc2;
+    }
+  }, 300);
 });
 function fpStartPlacing(type) {
   // Enter "placement mode": the next tap on the canvas places the sticker
@@ -3831,12 +3923,9 @@ document.getElementById('fpClearBtn').addEventListener('click', () => {
   document.getElementById('fpClearNo').addEventListener('click', () => banner.remove());
   document.getElementById('fpClearYes').addEventListener('click', () => {
     banner.remove();
-    // Clear both floors
-    fpFloors = [
-      { bgImageSrc: null, stickers: [], canvasData: null, canvasWidth: 900, canvasHeight: 650 },
-      { bgImageSrc: null, stickers: [], canvasData: null, canvasWidth: 900, canvasHeight: 650 },
-    ];
-    fpFloor = 0;
+    fpStickers = [];
+    fpBgImageSrc = null;
+    fpBgImageSrc2 = null;
     fpNextRoomNum = 1;
     fpSelectedId = null;
     fpResizeCanvasTo(900, 650);
@@ -3844,10 +3933,6 @@ document.getElementById('fpClearBtn').addEventListener('click', () => {
     fpStrokeHistory = [];
     fpIsDrawing = false;
     fpShapeStart = null;
-    // Reset floor tabs
-    document.querySelectorAll('.fp-floor-tab').forEach(btn => {
-      btn.classList.toggle('active', btn.getAttribute('data-floor') === '0');
-    });
     fpRenderCanvas();
   });
 });
@@ -3911,42 +3996,6 @@ fpCanvasWrap.addEventListener('touchend', (e) => {
 }, { passive: true });
 
 /* ---- Drawing: freehand strokes with color picker + eraser + undo ---- */
-function fpSaveCurrentFloorCanvas() {
-  // Save the current draw canvas pixels into the floor data before switching
-  fpFloors[fpFloor].canvasData = fpDrawCtx.getImageData(0, 0, fpDrawCanvas.width, fpDrawCanvas.height);
-}
-
-function fpSwitchFloor(floorIndex) {
-  if (floorIndex === fpFloor) return;
-  fpSaveCurrentFloorCanvas();
-  fpFloor = floorIndex;
-  fpSelectedId = null;
-  fpStrokeHistory = [];
-  fpIsDrawing = false;
-  fpShapeStart = null;
-  fpZoom = 1;
-  fpApplyZoom(false);
-
-  // Restore new floor's canvas
-  const floor = fpFloors[fpFloor];
-  fpResizeCanvasTo(floor.canvasWidth, floor.canvasHeight);
-  if (floor.canvasData) {
-    fpDrawCtx.putImageData(floor.canvasData, 0, 0);
-  } else {
-    fpDrawCtx.clearRect(0, 0, fpDrawCanvas.width, fpDrawCanvas.height);
-  }
-
-  // Update tab UI
-  document.querySelectorAll('.fp-floor-tab').forEach(btn => {
-    btn.classList.toggle('active', parseInt(btn.getAttribute('data-floor')) === fpFloor);
-  });
-
-  fpRenderCanvas();
-}
-
-document.getElementById('fpFloorGround').addEventListener('click', () => fpSwitchFloor(0));
-document.getElementById('fpFloorUpper').addEventListener('click', () => fpSwitchFloor(1));
-
 function fpSetMode(mode) {
   const ov = document.getElementById('fpTextOverlay');
   if (ov) ov.remove();
@@ -4210,42 +4259,7 @@ function fpDrawStickerToExportCanvas(ctx, s) {
   });
 }
 
-async function fpRenderFloorToCanvas(floorIdx, targetCtx, offsetY, floorW, floorH) {
-  const floor = fpFloors[floorIdx];
-
-  // background
-  targetCtx.fillStyle = '#e8edf5';
-  targetCtx.fillRect(0, offsetY, floorW, floorH);
-  if (floor.bgImageSrc) {
-    await new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => { targetCtx.drawImage(img, 0, offsetY, floorW, floorH); resolve(); };
-      img.onerror = () => resolve();
-      img.src = floor.bgImageSrc;
-    });
-  }
-
-  // hand-drawn strokes — use saved canvasData if not current floor
-  if (floorIdx === fpFloor) {
-    targetCtx.drawImage(fpDrawCanvas, 0, offsetY);
-  } else if (floor.canvasData) {
-    const tmpCanvas = document.createElement('canvas');
-    tmpCanvas.width = floorW; tmpCanvas.height = floorH;
-    tmpCanvas.getContext('2d').putImageData(floor.canvasData, 0, 0);
-    targetCtx.drawImage(tmpCanvas, 0, offsetY);
-  }
-
-  // stickers
-  for (const s of floor.stickers) {
-    const shifted = { ...s, y: s.y + offsetY };
-    await fpDrawStickerToExportCanvas(targetCtx, shifted);
-  }
-}
-
 async function fpExportImage() {
-  // Save current floor's canvas data before exporting
-  fpSaveCurrentFloorCanvas();
-
   const LEGEND = [
     { type: 'indoor',      label: 'Indoor Unit' },
     { type: 'outdoor',     label: 'Outdoor Unit' },
@@ -4257,110 +4271,86 @@ async function fpExportImage() {
     { type: 'replace',     label: 'Replace Indoor Unit' },
     { type: 'pump',        label: 'Condensate Pump' },
   ];
-
-  const ICON_SIZE = 36;
-  const ROW_H = 44;
-  const COLS = 3;
-  const PAD = 16;
-  const LABEL_FONT = '12px -apple-system, Arial, sans-serif';
+  const ICON_SIZE = 36, ROW_H = 44, COLS = 3, PAD = 16;
   const ROWS = Math.ceil(LEGEND.length / COLS);
-  const FLOOR_LABEL_H = 32; // height of "Ground Floor" / "Upper Floor" label bar
-
-  // Determine which floors have content
-  const hasUpper = fpFloors[1].bgImageSrc || fpFloors[1].stickers.length > 0 || fpFloors[1].canvasData;
-  const groundW = fpFloors[0].canvasWidth;
-  const groundH = fpFloors[0].canvasHeight;
-  const upperW  = fpFloors[1].canvasWidth;
-  const upperH  = fpFloors[1].canvasHeight;
-  const totalW = Math.max(groundW, hasUpper ? upperW : 0, 400);
-
   const legendH = PAD + 28 + ROWS * ROW_H + PAD;
-  const totalH = (FLOOR_LABEL_H + groundH) + (hasUpper ? FLOOR_LABEL_H + upperH + 6 : 0) + legendH;
+  const W = fpCanvasWidth, H = fpCanvasHeight;
+  const COL_W = Math.floor(W / COLS);
 
   const exportCanvas = document.createElement('canvas');
-  exportCanvas.width = totalW;
-  exportCanvas.height = totalH;
+  exportCanvas.width = W;
+  exportCanvas.height = H + legendH;
   const ctx = exportCanvas.getContext('2d');
+
+  // 1. background(s)
   ctx.fillStyle = '#e8edf5';
-  ctx.fillRect(0, 0, totalW, totalH);
-
-  // ── Ground Floor ──
-  ctx.fillStyle = '#1a46a0';
-  ctx.fillRect(0, 0, totalW, FLOOR_LABEL_H);
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 14px -apple-system, Arial, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  const customer = state.answers['customer_name'] || '';
-  const addr = state.answers['address'] || '';
-  const info = [customer, addr].filter(Boolean).join('  |  ');
-  ctx.fillText('🏠 Ground Floor' + (info ? '  —  ' + info : ''), PAD, FLOOR_LABEL_H / 2);
-  await fpRenderFloorToCanvas(0, ctx, FLOOR_LABEL_H, groundW, groundH);
-
-  // ── Upper Floor (if has content) ──
-  let upperOffsetY = FLOOR_LABEL_H + groundH;
-  if (hasUpper) {
-    upperOffsetY += 6;
-    ctx.fillStyle = '#0f2d72';
-    ctx.fillRect(0, upperOffsetY, totalW, FLOOR_LABEL_H);
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 14px -apple-system, Arial, sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🏢 Upper Floor', PAD, upperOffsetY + FLOOR_LABEL_H / 2);
-    await fpRenderFloorToCanvas(1, ctx, upperOffsetY + FLOOR_LABEL_H, upperW, upperH);
+  ctx.fillRect(0, 0, W, H);
+  const drawImg = (src, x, y, w, h) => new Promise(res => {
+    const img = new Image();
+    img.onload = () => { ctx.drawImage(img, x, y, w, h); res(); };
+    img.onerror = res;
+    img.src = src;
+  });
+  if (fpBgImageSrc && fpBgImageSrc2) {
+    const orient = fpGetOrientation();
+    if (orient === 'landscape') {
+      await drawImg(fpBgImageSrc, 0, 0, W/2, H);
+      await drawImg(fpBgImageSrc2, W/2, 0, W/2, H);
+      ctx.fillStyle = 'rgba(15,45,114,0.75)'; ctx.fillRect(0,0,72,22); ctx.fillRect(W/2,0,68,22);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Arial'; ctx.textBaseline = 'middle';
+      ctx.fillText('Ground', 6, 11); ctx.fillText('Upper', W/2+6, 11);
+    } else {
+      await drawImg(fpBgImageSrc, 0, 0, W, H/2);
+      await drawImg(fpBgImageSrc2, 0, H/2, W, H/2);
+      ctx.fillStyle = 'rgba(15,45,114,0.75)'; ctx.fillRect(0,0,72,22); ctx.fillRect(0,H/2,68,22);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Arial'; ctx.textBaseline = 'middle';
+      ctx.fillText('Ground', 6, 11); ctx.fillText('Upper', 6, H/2+11);
+    }
+  } else if (fpBgImageSrc) {
+    await drawImg(fpBgImageSrc, 0, 0, W, H);
+  } else if (fpBgImageSrc2) {
+    await drawImg(fpBgImageSrc2, 0, 0, W, H);
   }
 
-  // ── Symbol Key ──
-  const panelY = totalH - legendH;
-  const COL_W = Math.floor(totalW / COLS);
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, panelY, totalW, legendH);
-  ctx.fillStyle = '#1a46a0';
-  ctx.fillRect(0, panelY, totalW, 4);
-  ctx.fillStyle = '#1a46a0';
-  ctx.font = 'bold 14px -apple-system, Arial, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('📐 Symbol Key', PAD, panelY + PAD + 10);
+  // 2. drawings + stickers
+  ctx.drawImage(fpDrawCanvas, 0, 0);
+  for (const s of fpStickers) await fpDrawStickerToExportCanvas(ctx, s);
+
+  // 3. Symbol Key panel
+  const panelY = H;
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, panelY, W, legendH);
+  ctx.fillStyle = '#1a46a0'; ctx.fillRect(0, panelY, W, 4);
+  ctx.fillStyle = '#1a46a0'; ctx.font = 'bold 14px Arial';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  const hdr = [state.answers['customer_name']||'', state.answers['address']||''].filter(Boolean).join('  |  ');
+  ctx.fillText('📐 Symbol Key' + (hdr ? '  |  ' + hdr : ''), PAD, panelY + PAD + 10);
 
   const svgBodies = {
-    indoor:      `<rect x="4" y="20" width="52" height="18" rx="4" fill="#7fc4e8" stroke="#4a9bc4" stroke-width="2"/><rect x="8" y="25" width="44" height="3" fill="#ffffff" opacity="0.7"/>`,
-    outdoor:     `<rect x="14" y="8" width="32" height="44" rx="3" fill="#1e3a6e" stroke="#152a52" stroke-width="2"/><circle cx="30" cy="22" r="9" fill="none" stroke="#7fa8d8" stroke-width="2"/><circle cx="30" cy="22" r="3" fill="#7fa8d8"/>`,
-    room:        `<circle cx="30" cy="30" r="26" fill="#1e3a6e" stroke="#152a52" stroke-width="2"/><text x="30" y="38" font-size="22" font-weight="800" fill="#ffffff" text-anchor="middle" font-family="sans-serif">1</text>`,
-    switchboard: `<polygon points="34,4 18,32 28,32 24,56 42,26 31,26" fill="#D4AF37" stroke="#A0831A" stroke-width="1.5" stroke-linejoin="round"/>`,
-    brick:       `<rect x="4" y="16" width="52" height="16" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/><rect x="4" y="31" width="52" height="3" fill="#f5e6d0"/><rect x="4" y="33" width="22" height="16" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/><rect x="28" y="33" width="28" height="16" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/>`,
-    flashing:    `<rect x="8" y="22" width="44" height="32" rx="2" fill="#b03a2e" stroke="#7b1f15" stroke-width="1.5"/><ellipse cx="30" cy="34" rx="13" ry="9" fill="#c0392b" stroke="#7b1f15" stroke-width="1"/><rect x="26" y="4" width="8" height="26" rx="3" fill="#d0ccc8" stroke="#999" stroke-width="1.5"/>`,
-    remove:      `<rect x="6" y="8" width="48" height="32" rx="3" fill="#9e9689" stroke="#6b6358" stroke-width="2"/><circle cx="36" cy="24" r="10" fill="#7a7570" stroke="#6b6358" stroke-width="1.5"/><text x="30" y="54" font-size="11" font-weight="900" fill="#c0392b" text-anchor="middle" font-family="Arial Black, Arial, sans-serif">REMOVE</text>`,
-    replace:     `<rect x="4" y="12" width="52" height="20" rx="4" fill="#7fc4e8" stroke="#4a9bc4" stroke-width="2"/><rect x="8" y="17" width="44" height="3" fill="#ffffff" opacity="0.7"/><text x="30" y="50" font-size="10" font-weight="900" fill="#1a46a0" text-anchor="middle" font-family="Arial Black, Arial, sans-serif">REPLACE</text>`,
-    pump:        `<text x="30" y="44" font-size="46" font-weight="900" fill="#1A46A0" text-anchor="middle" font-family="Arial Black, Arial, sans-serif">P</text>`,
+    indoor:`<rect x="4" y="20" width="52" height="18" rx="4" fill="#7fc4e8" stroke="#4a9bc4" stroke-width="2"/>`,
+    outdoor:`<rect x="14" y="8" width="32" height="44" rx="3" fill="#1e3a6e" stroke="#152a52" stroke-width="2"/><circle cx="30" cy="22" r="9" fill="none" stroke="#7fa8d8" stroke-width="2"/>`,
+    room:`<circle cx="30" cy="30" r="26" fill="#1e3a6e" stroke="#152a52" stroke-width="2"/><text x="30" y="38" font-size="22" font-weight="800" fill="#fff" text-anchor="middle" font-family="sans-serif">1</text>`,
+    switchboard:`<polygon points="34,4 18,32 28,32 24,56 42,26 31,26" fill="#D4AF37" stroke="#A0831A" stroke-width="1.5"/>`,
+    brick:`<rect x="4" y="16" width="52" height="16" rx="2" fill="#c0622a" stroke="#8a3f18" stroke-width="1.5"/><rect x="4" y="33" width="22" height="16" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/><rect x="28" y="33" width="28" height="16" rx="2" fill="#d4743a" stroke="#8a3f18" stroke-width="1.5"/>`,
+    flashing:`<rect x="8" y="22" width="44" height="32" rx="2" fill="#b03a2e"/><ellipse cx="30" cy="34" rx="13" ry="9" fill="#c0392b"/><rect x="26" y="4" width="8" height="26" rx="3" fill="#d0ccc8"/>`,
+    remove:`<rect x="6" y="8" width="48" height="32" rx="3" fill="#9e9689"/><circle cx="36" cy="24" r="10" fill="#7a7570"/><text x="30" y="54" font-size="11" font-weight="900" fill="#c0392b" text-anchor="middle" font-family="Arial">REMOVE</text>`,
+    replace:`<rect x="4" y="12" width="52" height="20" rx="4" fill="#7fc4e8"/><text x="30" y="50" font-size="10" font-weight="900" fill="#1a46a0" text-anchor="middle" font-family="Arial">REPLACE</text>`,
+    pump:`<text x="30" y="44" font-size="46" font-weight="900" fill="#1A46A0" text-anchor="middle" font-family="Arial">P</text>`,
   };
-
   const itemStartY = panelY + PAD + 28;
-  await Promise.all(LEGEND.map((item, i) => new Promise((resolve) => {
-    const col = i % COLS;
-    const row = Math.floor(i / COLS);
-    const x = col * COL_W + PAD;
-    const y = itemStartY + row * ROW_H;
-    const body = svgBodies[item.type] || '';
-    const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">${body}</svg>`;
+  await Promise.all(LEGEND.map((item, i) => new Promise(res => {
+    const col = i % COLS, row = Math.floor(i / COLS);
+    const x = col * COL_W + PAD, y = itemStartY + row * ROW_H;
     const img = new Image();
     img.onload = () => {
-      ctx.drawImage(img, x, y + (ROW_H - ICON_SIZE) / 2, ICON_SIZE, ICON_SIZE);
-      ctx.fillStyle = '#0f1f3d';
-      ctx.font = LABEL_FONT;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(item.label, x + ICON_SIZE + 8, y + ROW_H / 2);
-      resolve();
+      ctx.drawImage(img, x, y + (ROW_H-ICON_SIZE)/2, ICON_SIZE, ICON_SIZE);
+      ctx.fillStyle = '#0f1f3d'; ctx.font = '12px Arial';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(item.label, x + ICON_SIZE + 8, y + ROW_H/2); res();
     };
-    img.onerror = () => resolve();
-    img.src = 'data:image/svg+xml;base64,' + btoa(svgMarkup);
+    img.onerror = res;
+    img.src = 'data:image/svg+xml;base64,' + btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">${svgBodies[item.type]||''}</svg>`);
   })));
-
-  ctx.fillStyle = '#d0d8e8';
-  ctx.fillRect(0, totalH - 1, totalW, 1);
-
+  ctx.fillStyle = '#d0d8e8'; ctx.fillRect(0, H+legendH-1, W, 1);
   return exportCanvas;
 }
 
