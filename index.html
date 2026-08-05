@@ -4274,7 +4274,10 @@ async function fpExportImage() {
   const ICON_SIZE = 36, ROW_H = 44, COLS = 3, PAD = 16;
   const ROWS = Math.ceil(LEGEND.length / COLS);
   const legendH = PAD + 28 + ROWS * ROW_H + PAD;
-  const W = fpCanvasWidth, H = fpCanvasHeight;
+  // Ensure canvas is never narrower than what 3-column Symbol Key needs
+  const MIN_LEGEND_W = COLS * (ICON_SIZE + 120) + PAD * 2; // ~3 cols × (icon + label) + padding
+  const W = Math.max(fpCanvasWidth, MIN_LEGEND_W);
+  const H = fpCanvasHeight;
   const COL_W = Math.floor(W / COLS);
 
   const exportCanvas = document.createElement('canvas');
