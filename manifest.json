@@ -1,0 +1,25 @@
+{
+  "name": "EcoCare Site Inspection",
+  "short_name": "Site Inspection",
+  "description": "AC Installation Site Inspection App by EcoCare",
+  "start_url": "/site-inspection-app/",
+  "scope": "/site-inspection-app/",
+  "display": "standalone",
+  "background_color": "#3a8c3f",
+  "theme_color": "#3a8c3f",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
