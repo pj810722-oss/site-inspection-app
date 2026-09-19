@@ -1010,6 +1010,17 @@
     color: var(--paper);
     cursor: pointer;
   }
+  .fp-topbar-upload-btn {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 7px;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.08);
+    color: var(--paper);
+    cursor: pointer;
+    white-space: nowrap;
+  }
   #fpFullscreenBtn {
     font-size: 15px;
     padding: 6px 10px;
@@ -1891,6 +1902,14 @@
       <div class="fp-title">📐 平面圖標註 Floor Plan</div>
       <div class="fp-actions">
         <button id="fpExportBtn">💾 存到相簿 Save</button>
+        <label class="fp-topbar-upload-btn" title="上傳樓下底圖 Upload Ground floor">
+          📷 樓下
+          <input type="file" accept="image/*" id="fpBgUpload" style="display:none">
+        </label>
+        <label class="fp-topbar-upload-btn" title="上傳樓上底圖 Upload Upper floor">
+          📷 樓上
+          <input type="file" accept="image/*" id="fpBgUpload2" style="display:none">
+        </label>
         <button id="fpFullscreenBtn" title="全螢幕 Fullscreen">⛶</button>
         <button id="fpClearBtn">清空 Clear</button>
         <button class="fp-collapse-btn" id="fpCollapseBtn">收合 Collapse ‹</button>
@@ -1925,16 +1944,6 @@
         </div>
       </div>
       <div class="fp-tray">
-        <div class="fp-tray-label">底圖 Background</div>
-        <label class="fp-upload-btn">
-          📷 樓下 Ground
-          <input type="file" accept="image/*" id="fpBgUpload" style="display:none">
-        </label>
-        <label class="fp-upload-btn" style="margin-top:4px;">
-          📷 樓上 Upper
-          <input type="file" accept="image/*" id="fpBgUpload2" style="display:none">
-        </label>
-
         <div class="fp-tray-label">位置 Units</div>
         <div class="fp-tray-grid">
           <div class="fp-tray-btn" id="fpAddIndoor">
