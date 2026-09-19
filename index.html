@@ -264,6 +264,114 @@
     border-color: #b0d8b2;
     color: var(--green);
   }
+  /* ---- New Hub flow: Step blocks ---- */
+  .hub-step-block {
+    margin: 12px 16px;
+    background: var(--panel);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .hub-step-label {
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 14px;
+    letter-spacing: 0.5px;
+  }
+  /* Schedule items */
+  .hub-schedule { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .hub-schedule-empty { color: var(--muted); font-size: 13px; padding: 14px; text-align: center; }
+  .hub-schedule-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+  }
+  .hub-schedule-item.selected { border-color: var(--green); background: var(--green-soft); }
+  .hub-schedule-time { font-size: 11px; font-weight: 700; color: var(--accent); margin-bottom: 2px; }
+  .hub-schedule-name { font-size: 14px; font-weight: 700; color: var(--ink); }
+  .hub-schedule-addr { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .hub-schedule-actions { display: flex; gap: 6px; flex: 0 0 auto; }
+  .hub-sched-select {
+    padding: 7px 12px;
+    border-radius: 7px;
+    border: none;
+    background: var(--green);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .hub-sched-remove {
+    padding: 7px 10px;
+    border-radius: 7px;
+    border: 1.5px solid var(--line);
+    background: var(--paper);
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .hub-schedule-add {
+    padding: 10px 12px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .hub-schedule-add input {
+    width: 100%;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .hub-schedule-add button {
+    padding: 9px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  /* Mode buttons */
+  .hub-mode-btns {
+    display: flex;
+    gap: 10px;
+    padding: 12px;
+  }
+  .hub-mode-btn {
+    flex: 1;
+    padding: 16px 12px;
+    border-radius: 10px;
+    border: 2px solid var(--line);
+    background: var(--paper);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .hub-mode-btn:active, .hub-mode-btn.active { transform: scale(0.98); }
+  .hub-mode-quick { border-color: var(--accent); }
+  .hub-mode-quick:hover, .hub-mode-quick:active { background: var(--accent); }
+  .hub-mode-quick:hover .hub-mode-title, .hub-mode-quick:active .hub-mode-title { color: #fff; }
+  .hub-mode-quick:hover .hub-mode-sub, .hub-mode-quick:active .hub-mode-sub { color: rgba(255,255,255,0.8); }
+  .hub-mode-standard { border-color: var(--green); }
+  .hub-mode-standard.active { background: var(--green); }
+  .hub-mode-standard.active .hub-mode-title { color: #fff; }
+  .hub-mode-standard.active .hub-mode-sub { color: rgba(255,255,255,0.8); }
+  .hub-mode-icon { font-size: 28px; margin-bottom: 6px; }
+  .hub-mode-title { font-size: 14px; font-weight: 800; color: var(--ink); margin-bottom: 4px; }
+  .hub-mode-sub { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
   .finish-cta {
     margin: 14px 18px 0;
   }
@@ -2798,6 +2906,27 @@ function ringSVG(pct, warn) {
     </svg>`;
 }
 
+// Today's schedule — array of {name, address, time} added manually or from Google Calendar later
+let todaySchedule = [];
+
+function renderScheduleItems() {
+  if (todaySchedule.length === 0) {
+    return `<div class="hub-schedule-empty">尚未加入行程 No schedule added yet</div>`;
+  }
+  return todaySchedule.map((item, i) => `
+    <div class="hub-schedule-item ${item.selected ? 'selected' : ''}" data-schedidx="${i}">
+      <div class="hub-schedule-info">
+        ${item.time ? `<div class="hub-schedule-time">${item.time}</div>` : ''}
+        <div class="hub-schedule-name">${item.name || '未填名稱'}</div>
+        <div class="hub-schedule-addr">${item.address}</div>
+      </div>
+      <div class="hub-schedule-actions">
+        <button class="hub-sched-select" data-schedidx="${i}">選用 Use</button>
+        <button class="hub-sched-remove" data-schedidx="${i}">✕</button>
+      </div>
+    </div>`).join('');
+}
+
 function renderHub() {
   const overall = overallCompletion();
   const allWarnings = collectWarnings();
@@ -2853,27 +2982,109 @@ function renderHub() {
         <div class="overall-pct">${overall}%</div>
       </div>
     </div>
-    <div class="quick-mode-cta">
-      <button id="todayScheduleBtn" style="border-color:var(--green);color:var(--green);margin-bottom:8px;">📅 今日行程 Today's Schedule</button>
-      <button id="quickModeBtn">⚡ 快速模式 Quick Mode</button>
-      <div class="quick-mode-hint">只選一拖幾，直接產生報告 Select unit count only, skip to report</div>
+
+    <!-- Step 1: Today's Schedule -->
+    <div class="hub-step-block">
+      <div class="hub-step-label">Step 1 　今日行程 Today's Schedule</div>
+      <div class="hub-schedule" id="hubSchedule">
+        ${renderScheduleItems()}
+      </div>
+      <div class="hub-schedule-add">
+        <input type="text" id="scheduleAddrInput" placeholder="手動輸入地址 Enter address manually..." style="-webkit-user-select:text;user-select:text;">
+        <input type="text" id="scheduleNameInput" placeholder="客戶名 Customer name（選填）" style="-webkit-user-select:text;user-select:text;">
+        <button id="scheduleAddBtn">＋ 加入 Add</button>
+      </div>
     </div>
-    <div class="hub-head">
-      <div class="h1">點選任一區塊開始填寫 Tap any section to start</div>
-      <div class="h2">不限順序，可隨時切換區塊；每塊會顯示完成度 Any order, switch sections anytime; each shows % complete</div>
+
+    <!-- Step 2: Choose Mode -->
+    <div class="hub-step-block">
+      <div class="hub-step-label">Step 2 　選擇評估模式 Choose Mode</div>
+      <div class="hub-mode-btns">
+        <button class="hub-mode-btn hub-mode-quick" id="quickModeBtn">
+          <div class="hub-mode-icon">⚡</div>
+          <div class="hub-mode-title">快速模式 Quick Mode</div>
+          <div class="hub-mode-sub">只填一拖幾，直接產生報告<br>Select units only, skip to report</div>
+        </button>
+        <button class="hub-mode-btn hub-mode-standard" id="standardModeBtn">
+          <div class="hub-mode-icon">📋</div>
+          <div class="hub-mode-title">標準模式 Standard Mode</div>
+          <div class="hub-mode-sub">完整填寫7個評估區塊<br>Full 7-section assessment</div>
+        </button>
+      </div>
     </div>
-    <div class="hub-list">${cardsHtml}</div>
-    ${banner}
-    <div class="finish-cta">
-      <button id="viewResultsBtn" ${overall < 100 ? 'disabled' : ''}>
-        ${overall === 100 ? `結束 inspection End Inspection ${allWarnings.length > 0 ? `(⚠ ${allWarnings.length}項限制 ${allWarnings.length} limitation(s))` : ''}` : `尚有未完成項目 Items remaining (${overall}%)`}
-      </button>
+
+    <!-- Standard mode section cards (hidden until standard mode selected) -->
+    <div id="hubSectionCards" style="display:none;">
+      <div class="hub-head">
+        <div class="h1">點選任一區塊開始填寫 Tap any section to start</div>
+        <div class="h2">不限順序，可隨時切換 Any order, switch anytime</div>
+      </div>
+      <div class="hub-list">${cardsHtml}</div>
+      ${banner}
+      <div class="finish-cta">
+        <button id="viewResultsBtn" ${overall < 100 ? 'disabled' : ''}>
+          ${overall === 100 ? `結束 Finish Inspection ${allWarnings.length > 0 ? `(⚠ ${allWarnings.length})` : ''}` : `尚有未完成項目 (${overall}%)`}
+        </button>
+      </div>
     </div>
     <div style="height:30px"></div>
   `;
 }
 
+function openQuickMode() {
+  document.querySelectorAll('.qm-opt').forEach(o => o.classList.remove('selected'));
+  document.getElementById('qmConfirmBtn').disabled = true;
+  const nameEl = document.getElementById('qmCustomerName');
+  const addrEl = document.getElementById('qmAddress');
+  if (nameEl) nameEl.value = state.answers['customer_name'] || '';
+  if (addrEl) addrEl.value = state.answers['address'] || '';
+  ['qmSalesNote','qmInstallNote','qmOtherNote'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  ['qmFeeElec','qmFeeSwitch','qmFeeGas','qmFeeCeiling','qmFeeLadder','qmFeeStairs','qmFeeTin','qmFeeIndoor'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.checked = false;
+  });
+  ['qmQtyHeight','qmQtyRemove','qmQtyBrick','qmQtyPipe','qmQtyFlashing'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = '0'; const row = el.closest('.qm-fee-row'); if(row){row.style.borderColor='';row.style.background='';} }
+  });
+  document.getElementById('quickModalOverlay').classList.add('open');
+}
+
 function attachHubEvents() {
+  // Schedule: add manual entry
+  const schedAddBtn = document.getElementById('scheduleAddBtn');
+  if (schedAddBtn) {
+    schedAddBtn.addEventListener('click', () => {
+      const addr = document.getElementById('scheduleAddrInput').value.trim();
+      const name = document.getElementById('scheduleNameInput').value.trim();
+      if (!addr) return;
+      todaySchedule.push({ name, address: addr, time: '', selected: false });
+      document.getElementById('scheduleAddrInput').value = '';
+      document.getElementById('scheduleNameInput').value = '';
+      document.getElementById('hubSchedule').innerHTML = renderScheduleItems();
+      attachScheduleEvents();
+    });
+  }
+  attachScheduleEvents();
+
+  // Standard mode toggle
+  const stdBtn = document.getElementById('standardModeBtn');
+  if (stdBtn) {
+    stdBtn.addEventListener('click', () => {
+      const cards = document.getElementById('hubSectionCards');
+      const isVisible = cards.style.display !== 'none';
+      cards.style.display = isVisible ? 'none' : 'block';
+      stdBtn.classList.toggle('active', !isVisible);
+      if (!isVisible) cards.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  // Quick mode
+  const qmBtn = document.getElementById('quickModeBtn');
+  if (qmBtn) qmBtn.addEventListener('click', openQuickMode);
+
+  // Section cards (inside standard mode)
   document.querySelectorAll('.hub-card').forEach(el => {
     el.addEventListener('click', () => {
       state.currentSection = el.getAttribute('data-section');
@@ -2881,44 +3092,38 @@ function attachHubEvents() {
       render();
     });
   });
-  document.getElementById('viewResultsBtn').addEventListener('click', () => {
-    state.view = "results";
-    render();
+  const vrBtn = document.getElementById('viewResultsBtn');
+  if (vrBtn) vrBtn.addEventListener('click', () => { state.view = "results"; render(); });
+}
+
+function attachScheduleEvents() {
+  // "Use" button — fills customer name + address then asks which mode
+  document.querySelectorAll('.hub-sched-select').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.getAttribute('data-schedidx'));
+      const item = todaySchedule[idx];
+      if (!item) return;
+      // Mark as selected
+      todaySchedule.forEach(s => s.selected = false);
+      item.selected = true;
+      // Pre-fill state
+      if (item.name) state.answers['customer_name'] = item.name;
+      state.answers['address'] = item.address;
+      document.getElementById('hubSchedule').innerHTML = renderScheduleItems();
+      attachScheduleEvents();
+      // Show mode chooser highlight
+      document.querySelector('.hub-mode-btns').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
   });
-  const todayBtn = document.getElementById('todayScheduleBtn');
-  if (todayBtn) {
-    todayBtn.addEventListener('click', () => {
-      openTodaySchedule();
+  // Remove button
+  document.querySelectorAll('.hub-sched-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.getAttribute('data-schedidx'));
+      todaySchedule.splice(idx, 1);
+      document.getElementById('hubSchedule').innerHTML = renderScheduleItems();
+      attachScheduleEvents();
     });
-  }
-  const qmBtn = document.getElementById('quickModeBtn');
-  if (qmBtn) {
-    qmBtn.addEventListener('click', () => {
-      document.querySelectorAll('.qm-opt').forEach(o => o.classList.remove('selected'));
-      document.getElementById('qmConfirmBtn').disabled = true;
-      // Pre-fill from existing state if already entered
-      const nameEl = document.getElementById('qmCustomerName');
-      const addrEl = document.getElementById('qmAddress');
-      if (nameEl) nameEl.value = state.answers['customer_name'] || '';
-      if (addrEl) addrEl.value = state.answers['address'] || '';
-      // Clear note fields and fee inputs each time
-      ['qmSalesNote','qmInstallNote','qmOtherNote'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-      });
-      // Reset checkboxes
-      ['qmFeeElec','qmFeeSwitch','qmFeeGas','qmFeeCeiling','qmFeeLadder','qmFeeStairs','qmFeeTin','qmFeeIndoor'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.checked = false;
-      });
-      // Reset steppers
-      ['qmQtyHeight','qmQtyRemove','qmQtyBrick','qmQtyPipe','qmQtyFlashing'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.textContent = '0'; el.closest('.qm-fee-row').style.borderColor = ''; el.closest('.qm-fee-row').style.background = ''; }
-      });
-      document.getElementById('quickModalOverlay').classList.add('open');
-    });
-  }
+  });
 }
 
 /* ---- Quick Mode modal logic (attached once at startup) ---- */
