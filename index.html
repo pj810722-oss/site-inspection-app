@@ -1663,6 +1663,91 @@
     background: #ccc;
     cursor: not-allowed;
   }
+  .qm-fee-section {
+    margin-bottom: 16px;
+  }
+  .qm-fee-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .qm-fee-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    padding: 10px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    cursor: pointer;
+  }
+  .qm-fee-check input[type="checkbox"] {
+    width: 20px; height: 20px;
+    accent-color: var(--green);
+    flex: 0 0 auto;
+  }
+  .qm-fee-check:has(input:checked) {
+    border-color: var(--green);
+    background: var(--green-soft);
+  }
+  .qm-fee-steppers {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .qm-fee-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+  }
+  .qm-fee-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    flex: 1;
+  }
+  .qm-stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .qm-step-btn {
+    width: 36px; height: 36px;
+    border: none;
+    background: var(--paper);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qm-step-btn:active { background: var(--accent-soft); }
+  .qm-step-val {
+    min-width: 32px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    padding: 0 4px;
+    line-height: 36px;
+  }
+  .qm-fee-row:has(.qm-step-val:not(:empty)):not(:has([data-val="0"])) {
+    border-color: var(--green);
+    background: var(--green-soft);
+  }
   .cal-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
   .cal-item {
     border: 1.5px solid var(--line);
@@ -1732,6 +1817,66 @@
     <div id="qmComboSection" style="display:none">
       <div class="qm-label">功率組合 Power Combination</div>
       <div class="qm-options qm-combo-opts" id="qmComboOpts" style="flex-direction:column; gap:8px;"></div>
+    </div>
+
+    <div class="qm-label">附加費用 Extra Fees <span style="font-weight:400;opacity:0.6">（選填）</span></div>
+
+    <div class="qm-fee-section">
+      <!-- Checkbox fees (fixed ×1) -->
+      <div class="qm-fee-checks">
+        <label class="qm-fee-check"><input type="checkbox" id="qmFeeElec"> 拉電費 Cabling fee</label>
+        <label class="qm-fee-check"><input type="checkbox" id="qmFeeSwitch"> Mini Switch ×2</label>
+        <label class="qm-fee-check"><input type="checkbox" id="qmFeeGas"> 移除Gas Heater</label>
+        <label class="qm-fee-check"><input type="checkbox" id="qmFeeCeiling"> 高天花費 High ceiling fee</label>
+        <label class="qm-fee-check"><input type="checkbox" id="qmFeeLadder"> 高梯費 High ladder fee</label>
+        <label class="qm-fee-check"><input type="checkbox" id="qmFeeStairs"> 階梯搬運費 Stair carry fee</label>
+        <label class="qm-fee-check"><input type="checkbox" id="qmFeeTin"> 鐵皮費 Tin roof fee</label>
+        <label class="qm-fee-check"><input type="checkbox" id="qmFeeIndoor"> 室內搬運費 Indoor transport fee</label>
+      </div>
+
+      <!-- Stepper fees (variable quantity) -->
+      <div class="qm-fee-steppers">
+        <div class="qm-fee-row">
+          <span class="qm-fee-label">高空費 Height fee</span>
+          <div class="qm-stepper">
+            <button class="qm-step-btn" data-target="qmQtyHeight" data-dir="-1">－</button>
+            <span class="qm-step-val" id="qmQtyHeight">0</span>
+            <button class="qm-step-btn" data-target="qmQtyHeight" data-dir="1">＋</button>
+          </div>
+        </div>
+        <div class="qm-fee-row">
+          <span class="qm-fee-label">移除舊空調費 Removal fee</span>
+          <div class="qm-stepper">
+            <button class="qm-step-btn" data-target="qmQtyRemove" data-dir="-1">－</button>
+            <span class="qm-step-val" id="qmQtyRemove">0</span>
+            <button class="qm-step-btn" data-target="qmQtyRemove" data-dir="1">＋</button>
+          </div>
+        </div>
+        <div class="qm-fee-row">
+          <span class="qm-fee-label">雙磚費 Double brick fee</span>
+          <div class="qm-stepper">
+            <button class="qm-step-btn" data-target="qmQtyBrick" data-dir="-1">－</button>
+            <span class="qm-step-val" id="qmQtyBrick">0</span>
+            <button class="qm-step-btn" data-target="qmQtyBrick" data-dir="1">＋</button>
+          </div>
+        </div>
+        <div class="qm-fee-row">
+          <span class="qm-fee-label">拉管費 Pipe fee</span>
+          <div class="qm-stepper">
+            <button class="qm-step-btn" data-target="qmQtyPipe" data-dir="-1">－</button>
+            <span class="qm-step-val" id="qmQtyPipe">0</span>
+            <button class="qm-step-btn" data-target="qmQtyPipe" data-dir="1">＋</button>
+          </div>
+        </div>
+        <div class="qm-fee-row">
+          <span class="qm-fee-label">穿瓦費 Roof Pipe Flashing</span>
+          <div class="qm-stepper">
+            <button class="qm-step-btn" data-target="qmQtyFlashing" data-dir="-1">－</button>
+            <span class="qm-step-val" id="qmQtyFlashing">0</span>
+            <button class="qm-step-btn" data-target="qmQtyFlashing" data-dir="1">＋</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="qm-actions">
@@ -2747,10 +2892,20 @@ function attachHubEvents() {
       const addrEl = document.getElementById('qmAddress');
       if (nameEl) nameEl.value = state.answers['customer_name'] || '';
       if (addrEl) addrEl.value = state.answers['address'] || '';
-      // Clear note fields each time
+      // Clear note fields and fee inputs each time
       ['qmSalesNote','qmInstallNote','qmOtherNote'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
+      });
+      // Reset checkboxes
+      ['qmFeeElec','qmFeeSwitch','qmFeeGas','qmFeeCeiling','qmFeeLadder','qmFeeStairs','qmFeeTin','qmFeeIndoor'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.checked = false;
+      });
+      // Reset steppers
+      ['qmQtyHeight','qmQtyRemove','qmQtyBrick','qmQtyPipe','qmQtyFlashing'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.textContent = '0'; el.closest('.qm-fee-row').style.borderColor = ''; el.closest('.qm-fee-row').style.background = ''; }
       });
       document.getElementById('quickModalOverlay').classList.add('open');
     });
@@ -2795,6 +2950,22 @@ function attachHubEvents() {
     checkQmReady();
   }
 
+  // Stepper buttons
+  document.querySelectorAll('.qm-step-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-target');
+      const dir = parseInt(btn.getAttribute('data-dir'));
+      const valEl = document.getElementById(targetId);
+      const current = parseInt(valEl.textContent) || 0;
+      const next = Math.max(0, current + dir);
+      valEl.textContent = next;
+      // Highlight row if > 0
+      const row = valEl.closest('.qm-fee-row');
+      if (row) row.style.borderColor = next > 0 ? 'var(--green)' : '';
+      if (row) row.style.background = next > 0 ? 'var(--green-soft)' : '';
+    });
+  });
+
   document.getElementById('qmCancelBtn').addEventListener('click', () => {
     document.getElementById('quickModalOverlay').classList.remove('open');
   });
@@ -2828,25 +2999,49 @@ function attachHubEvents() {
     const otherNote = document.getElementById('qmOtherNote');
     if (nameInput && nameInput.value.trim()) state.answers['customer_name'] = nameInput.value.trim();
     if (addrInput && addrInput.value.trim()) state.answers['address'] = addrInput.value.trim();
-    // Save notes into the basic_note note_list so they appear in the WeChat summary
+    // Save notes
     const noteQid = 'basic_note';
     if (!state.noteLists[noteQid]) state.noteLists[noteQid] = [];
-    if (salesNote && salesNote.value.trim()) {
-      state.noteLists[noteQid].push({ category: 'sales', text: salesNote.value.trim(), photos: [] });
-    }
-    if (installNote && installNote.value.trim()) {
-      state.noteLists[noteQid].push({ category: 'install', text: installNote.value.trim(), photos: [] });
-    }
-    if (otherNote && otherNote.value.trim()) {
-      state.noteLists[noteQid].push({ category: 'other', text: otherNote.value.trim(), photos: [] });
-    }
+    if (salesNote && salesNote.value.trim()) state.noteLists[noteQid].push({ category: 'sales', text: salesNote.value.trim(), photos: [] });
+    if (installNote && installNote.value.trim()) state.noteLists[noteQid].push({ category: 'install', text: installNote.value.trim(), photos: [] });
+    if (otherNote && otherNote.value.trim()) state.noteLists[noteQid].push({ category: 'other', text: otherNote.value.trim(), photos: [] });
+
+    // Collect fee checkboxes (fixed ×1)
+    if (!state.manualFees) state.manualFees = [];
+    const checkFees = [
+      ['qmFeeElec',    '拉電費 ×1 Cabling fee ×1'],
+      ['qmFeeSwitch',  'Mini Switch ×2'],
+      ['qmFeeGas',     '舊機移除費 ×1 Remove Gas Heater ×1'],
+      ['qmFeeCeiling', '高天花費 ×1 High ceiling fee ×1'],
+      ['qmFeeLadder',  '高梯費 ×1 High ladder fee ×1'],
+      ['qmFeeStairs',  '階梯搬運費 ×1 Stair carry fee ×1'],
+      ['qmFeeTin',     '鐵皮費 ×1 Tin roof fee ×1'],
+      ['qmFeeIndoor',  '室內搬運費 ×1 Indoor transport fee ×1'],
+    ];
+    checkFees.forEach(([id, text]) => {
+      const el = document.getElementById(id);
+      if (el && el.checked) state.manualFees.push(text);
+    });
+
+    // Collect stepper fees (variable quantity)
+    const stepFees = [
+      ['qmQtyHeight',   '高空費',   'Height fee'],
+      ['qmQtyRemove',   '移除舊空調費', 'Removal fee'],
+      ['qmQtyBrick',    '雙磚費',   'Double brick fee'],
+      ['qmQtyPipe',     '拉管費',   'Pipe fee'],
+      ['qmQtyFlashing', 'Roof Pipe Flashing', 'Roof Pipe Flashing'],
+    ];
+    stepFees.forEach(([id, zhLabel, enLabel]) => {
+      const el = document.getElementById(id);
+      const qty = el ? (parseInt(el.textContent) || 0) : 0;
+      if (qty > 0) state.manualFees.push(`${zhLabel} ×${qty} ${enLabel} ×${qty}`);
+    });
+
     state.answers['indoor_count'] = qmCount;
     state.answers['system_type'] = qmType;
-    // Save the combo selection (same format as the full questionnaire)
     if (qmComboKey) {
       state.answers['hp_combo'] = qmComboKey;
     } else {
-      // single combo auto-selected
       const combos = HP_COMBOS[qmCount] || [];
       if (combos[0]) state.answers['hp_combo'] = combos[0].key;
     }
