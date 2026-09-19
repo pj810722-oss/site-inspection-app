@@ -1292,10 +1292,46 @@
   .fp-body {
     flex: 1;
     display: flex;
+    flex-direction: row; /* portrait: canvas left, tray right */
     min-height: 0;
   }
-  @media (max-width: 880px) {
-    .fp-body { flex-direction: row; }
+  /* Landscape: tray moves below the canvas so canvas gets full width */
+  @media (orientation: landscape) {
+    .fp-body { flex-direction: column; }
+    .fp-tray {
+      flex: 0 0 auto !important;
+      width: 100% !important;
+      border-left: none !important;
+      border-top: 1px solid var(--line);
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      padding: 6px 8px !important;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+    .fp-tray-label {
+      width: 100%;
+      margin: 4px 0 4px !important;
+    }
+    .fp-tray-divider {
+      width: 100%;
+      height: 1px;
+      margin: 4px 0 !important;
+    }
+    .fp-tray-grid {
+      display: flex !important;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .fp-tray-btn {
+      width: auto !important;
+      padding: 5px 8px !important;
+      font-size: 9px !important;
+    }
+    .fp-tray-btn svg { width: 20px !important; height: 20px !important; }
   }
   .fp-canvas-wrap {
     flex: 1;
@@ -4017,35 +4053,18 @@ function fpRenderCanvas() {
 
   let bgHtml = '';
   if (fpBgImageSrc && fpBgImageSrc2) {
-    // Two images — arrange based on orientation
-    const orient = fpGetOrientation();
-    if (orient === 'landscape') {
-      // Side by side: each takes 50% width
-      bgHtml = `
-        <div class="fp-bg-split fp-bg-split-h">
-          <div class="fp-bg-half">
-            <div class="fp-bg-label">🏠 Ground</div>
-            <img src="${fpBgImageSrc}" class="fp-bg-image-half">
-          </div>
-          <div class="fp-bg-half">
-            <div class="fp-bg-label">🏢 Upper</div>
-            <img src="${fpBgImageSrc2}" class="fp-bg-image-half">
-          </div>
-        </div>`;
-    } else {
-      // Stacked: each takes 50% height
-      bgHtml = `
-        <div class="fp-bg-split fp-bg-split-v">
-          <div class="fp-bg-half">
-            <div class="fp-bg-label">🏠 Ground</div>
-            <img src="${fpBgImageSrc}" class="fp-bg-image-half">
-          </div>
-          <div class="fp-bg-half">
-            <div class="fp-bg-label">🏢 Upper</div>
-            <img src="${fpBgImageSrc2}" class="fp-bg-image-half">
-          </div>
-        </div>`;
-    }
+    // Always side by side (left/right) regardless of orientation
+    bgHtml = `
+      <div class="fp-bg-split fp-bg-split-h">
+        <div class="fp-bg-half">
+          <div class="fp-bg-label">🏠 Ground</div>
+          <img src="${fpBgImageSrc}" class="fp-bg-image-half">
+        </div>
+        <div class="fp-bg-half">
+          <div class="fp-bg-label">🏢 Upper</div>
+          <img src="${fpBgImageSrc2}" class="fp-bg-image-half">
+        </div>
+      </div>`;
   } else if (fpBgImageSrc) {
     bgHtml = `<img src="${fpBgImageSrc}" class="fp-bg-image" id="fpBgImg">`;
   } else if (fpBgImageSrc2) {
