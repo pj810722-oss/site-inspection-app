@@ -1294,44 +1294,46 @@
     display: flex;
     flex-direction: row; /* portrait: canvas left, tray right */
     min-height: 0;
+    overflow: hidden;
   }
   /* Landscape: tray moves below the canvas so canvas gets full width */
   @media (orientation: landscape) {
-    .fp-body { flex-direction: column; }
+    .fp-body {
+      flex-direction: column;
+    }
     .fp-tray {
       flex: 0 0 auto !important;
       width: 100% !important;
       border-left: none !important;
       border-top: 1px solid var(--line);
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-items: flex-start;
-      padding: 6px 8px !important;
-      max-height: 160px;
-      overflow-y: auto;
-    }
-    .fp-tray-label {
-      width: 100%;
-      margin: 4px 0 4px !important;
-    }
-    .fp-tray-divider {
-      width: 100%;
-      height: 1px;
-      margin: 4px 0 !important;
-    }
-    .fp-tray-grid {
       display: flex !important;
       flex-direction: row;
       flex-wrap: wrap;
+      align-items: center;
+      padding: 5px 8px !important;
+      max-height: 120px;
+      overflow-x: auto;
+      overflow-y: hidden;
       gap: 5px;
+    }
+    .fp-tray-label {
+      display: none !important;
+    }
+    .fp-tray-divider {
+      display: none !important;
+    }
+    .fp-tray-grid {
+      display: contents !important;
     }
     .fp-tray-btn {
       width: auto !important;
-      padding: 5px 8px !important;
-      font-size: 9px !important;
+      min-width: 52px;
+      padding: 4px 6px !important;
+      font-size: 8.5px !important;
+      flex-shrink: 0;
     }
-    .fp-tray-btn svg { width: 20px !important; height: 20px !important; }
+    .fp-tray-btn svg { width: 22px !important; height: 22px !important; }
+    .fp-upload-btn { display: none !important; }
   }
   .fp-canvas-wrap {
     flex: 1;
@@ -1464,10 +1466,10 @@
     pointer-events: none;
   }
   .fp-tray {
-    flex: 0 0 160px;
+    flex: 0 0 130px;
     background: var(--panel);
     border-left: 1px solid var(--line);
-    padding: 10px 8px;
+    padding: 8px 6px;
     overflow-y: auto;
   }
   .fp-tray-label {
