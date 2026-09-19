@@ -1132,6 +1132,57 @@
   .fp-topbar-upload-btn:active {
     background: rgba(255,255,255,0.22);
   }
+  /* ---- Floor type upload modal ---- */
+  .fp-floor-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .fp-floor-modal-overlay.open { display: flex; }
+  .fp-floor-modal {
+    background: var(--panel);
+    border-radius: 16px;
+    padding: 22px 20px;
+    width: 100%;
+    max-width: 340px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  }
+  .fp-floor-modal-title {
+    font-size: 15px; font-weight: 800; color: var(--ink);
+    margin-bottom: 16px; text-align: center;
+  }
+  .fp-floor-modal-btns { display: flex; gap: 12px; margin-bottom: 12px; }
+  .fp-floor-modal-btns button {
+    flex: 1; padding: 18px 12px; border-radius: 12px;
+    border: 2px solid var(--line); background: var(--paper);
+    cursor: pointer; text-align: center; color: var(--ink);
+  }
+  .fp-floor-modal-btns button:active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .fp-floor-modal-cancel {
+    width: 100%; padding: 11px; border-radius: 9px;
+    border: 1.5px solid var(--line); background: var(--paper);
+    color: var(--muted); font-size: 14px; font-weight: 600;
+    cursor: pointer; display: block;
+  }
+  .fp-double-upload-btn {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; padding: 14px 16px; border-radius: 10px;
+    border: 2px dashed var(--line); background: var(--paper);
+    color: var(--accent); font-size: 14px; font-weight: 700;
+    cursor: pointer; box-sizing: border-box;
+  }
+  .fp-double-upload-btn.uploaded { border-color: var(--green); background: var(--green-soft); color: var(--green); }
+  .fp-upload-status {
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    background: var(--line); padding: 3px 8px; border-radius: 10px;
+  }
+  .fp-upload-status.done { background: var(--green-soft); color: var(--green); }
+
   /* Fullscreen mode: fp-pane covers the entire viewport */
   .fp-fullscreen .fp-pane {
     position: fixed !important;
@@ -2001,20 +2052,55 @@
   <div class="fp-pane" id="fpPane">
     <div class="fp-topbar">
       <div class="fp-actions">
-        <button id="fpExportBtn">💾 存圖</button>
-        <label class="fp-topbar-upload-btn">
-          📷 樓下
-          <input type="file" accept="image/*" id="fpBgUpload" style="display:none">
-        </label>
-        <label class="fp-topbar-upload-btn">
-          📷 樓上
-          <input type="file" accept="image/*" id="fpBgUpload2" style="display:none">
-        </label>
+        <button id="fpUploadBtn">📷 上傳底圖</button>
+        <button id="fpExportBtn">💾 儲存平面圖</button>
         <button id="fpFullscreenBtn" title="全螢幕">⛶</button>
         <button id="fpClearBtn">清空</button>
         <button class="fp-collapse-btn" id="fpCollapseBtn">收合 ‹</button>
       </div>
     </div>
+
+    <!-- Floor type modal -->
+    <div class="fp-floor-modal-overlay" id="fpFloorModalOverlay">
+      <div class="fp-floor-modal">
+        <div class="fp-floor-modal-title">選擇樓層類型 Floor Type</div>
+        <div class="fp-floor-modal-btns">
+          <button id="fpFloorSingle">
+            <div style="font-size:24px;margin-bottom:6px;">🏠</div>
+            <div style="font-weight:800;font-size:15px;">單層 Single</div>
+            <div style="font-size:12px;opacity:0.7;margin-top:3px;">上傳一張平面圖</div>
+          </button>
+          <button id="fpFloorDouble">
+            <div style="font-size:24px;margin-bottom:6px;">🏢</div>
+            <div style="font-weight:800;font-size:15px;">雙層 Double</div>
+            <div style="font-size:12px;opacity:0.7;margin-top:3px;">上傳樓下＋樓上</div>
+          </button>
+        </div>
+        <button class="fp-floor-modal-cancel" id="fpFloorModalCancel">取消 Cancel</button>
+      </div>
+    </div>
+
+    <!-- Double floor upload modal -->
+    <div class="fp-floor-modal-overlay" id="fpDoubleUploadOverlay">
+      <div class="fp-floor-modal">
+        <div class="fp-floor-modal-title">上傳雙層底圖 Upload Both Floors</div>
+        <label class="fp-double-upload-btn">
+          📷 樓下 Ground Floor
+          <span id="fpGroundStatus" class="fp-upload-status">未上傳</span>
+          <input type="file" accept="image/*" id="fpBgUpload" style="display:none">
+        </label>
+        <label class="fp-double-upload-btn" style="margin-top:8px;">
+          📷 樓上 Upper Floor
+          <span id="fpUpperStatus" class="fp-upload-status">未上傳</span>
+          <input type="file" accept="image/*" id="fpBgUpload2" style="display:none">
+        </label>
+        <button class="fp-floor-modal-cancel" id="fpDoubleUploadDone" style="margin-top:12px;background:var(--green);color:#fff;border:none;">完成 Done</button>
+        <button class="fp-floor-modal-cancel" id="fpDoubleUploadCancel" style="margin-top:6px;">取消 Cancel</button>
+      </div>
+    </div>
+
+    <!-- Hidden single upload input -->
+    <input type="file" accept="image/*" id="fpBgUploadSingle" style="display:none">
     <div class="fp-drawbar" id="fpDrawbar">
       <button class="fp-mode-btn" id="fpModeMove" data-active="true">✋ 移動 Move</button>
       <button class="fp-mode-btn" id="fpModeDraw">✏️ 畫筆 Draw</button>
@@ -4218,11 +4304,46 @@ function fpHandleBgUpload(file, slot) {
   reader.readAsDataURL(file);
 }
 
+// ---- Upload bottom modal flow ----
+document.getElementById('fpUploadBtn').addEventListener('click', () => {
+  document.getElementById('fpFloorModalOverlay').classList.add('open');
+});
+document.getElementById('fpFloorModalCancel').addEventListener('click', () => {
+  document.getElementById('fpFloorModalOverlay').classList.remove('open');
+});
+
+// Single floor
+document.getElementById('fpFloorSingle').addEventListener('click', () => {
+  document.getElementById('fpFloorModalOverlay').classList.remove('open');
+  document.getElementById('fpBgUploadSingle').click();
+});
+document.getElementById('fpBgUploadSingle').addEventListener('change', (e) => {
+  fpHandleBgUpload(e.target.files[0], 1);
+  fpBgImageSrc2 = null; // clear upper floor
+});
+
+// Double floor
+document.getElementById('fpFloorDouble').addEventListener('click', () => {
+  document.getElementById('fpFloorModalOverlay').classList.remove('open');
+  document.getElementById('fpDoubleUploadOverlay').classList.add('open');
+});
+document.getElementById('fpDoubleUploadCancel').addEventListener('click', () => {
+  document.getElementById('fpDoubleUploadOverlay').classList.remove('open');
+});
+document.getElementById('fpDoubleUploadDone').addEventListener('click', () => {
+  document.getElementById('fpDoubleUploadOverlay').classList.remove('open');
+});
+
 document.getElementById('fpBgUpload').addEventListener('change', (e) => {
   fpHandleBgUpload(e.target.files[0], 1);
+  const status = document.getElementById('fpGroundStatus');
+  const label = document.querySelector('label[for=""] .fp-double-upload-btn');
+  if (status) { status.textContent = '✓ 已上傳'; status.className = 'fp-upload-status done'; }
 });
 document.getElementById('fpBgUpload2').addEventListener('change', (e) => {
   fpHandleBgUpload(e.target.files[0], 2);
+  const status = document.getElementById('fpUpperStatus');
+  if (status) { status.textContent = '✓ 已上傳'; status.className = 'fp-upload-status done'; }
 });
 
 // Re-render on orientation change so layout switches between stacked/side-by-side
