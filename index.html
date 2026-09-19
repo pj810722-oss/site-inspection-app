@@ -4479,10 +4479,8 @@ document.getElementById('fpClearBtn').addEventListener('click', () => {
   });
 });
 document.getElementById('fpCollapseBtn').addEventListener('click', () => {
-  shellEl.classList.add('fp-collapsed');
-});
-document.getElementById('fpExpandBtn').addEventListener('click', () => {
-  shellEl.classList.remove('fp-collapsed');
+  const isCollapsed = shellEl.classList.toggle('fp-collapsed');
+  document.getElementById('fpCollapseBtn').textContent = isCollapsed ? '展開 ›' : '收合 ‹';
 });
 
 document.getElementById('fpFullscreenBtn').addEventListener('click', () => {
