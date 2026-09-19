@@ -1100,45 +1100,38 @@
   .fp-topbar {
     background: var(--ink);
     color: var(--paper);
-    padding: 10px 14px;
+    padding: 8px 10px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
     flex: 0 0 auto;
   }
-  .fp-topbar .fp-title { font-size: 13.5px; font-weight: 700; }
-  .fp-topbar .fp-actions { display: flex; gap: 6px; }
-  .fp-topbar button {
-    font-size: 11.5px;
-    font-weight: 600;
-    padding: 6px 10px;
-    border-radius: 7px;
-    border: 1.5px solid rgba(255,255,255,0.25);
-    background: rgba(255,255,255,0.08);
-    color: var(--paper);
-    cursor: pointer;
+  .fp-topbar .fp-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    width: 100%;
   }
+  /* All topbar controls — buttons AND upload labels — share identical sizing */
+  .fp-topbar button,
   .fp-topbar-upload-btn {
-    font-size: 11.5px;
-    font-weight: 600;
-    padding: 6px 10px;
-    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 12px;
+    border-radius: 8px;
     border: 1.5px solid rgba(255,255,255,0.25);
-    background: rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.10);
     color: var(--paper);
     cursor: pointer;
     white-space: nowrap;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
-  #fpFullscreenBtn {
-    font-size: 15px;
-    padding: 6px 10px;
-    border-radius: 7px;
-    border: 1.5px solid rgba(255,255,255,0.25);
-    background: var(--accent);
-    color: #fff;
-    cursor: pointer;
+  .fp-topbar button:active,
+  .fp-topbar-upload-btn:active {
+    background: rgba(255,255,255,0.22);
   }
-
   /* Fullscreen mode: fp-pane covers the entire viewport */
   .fp-fullscreen .fp-pane {
     position: fixed !important;
@@ -2007,20 +2000,19 @@
 <div class="shell" id="shell">
   <div class="fp-pane" id="fpPane">
     <div class="fp-topbar">
-      <div class="fp-title">📐 平面圖標註 Floor Plan</div>
       <div class="fp-actions">
-        <button id="fpExportBtn">💾 存到相簿 Save</button>
-        <label class="fp-topbar-upload-btn" title="上傳樓下底圖 Upload Ground floor">
+        <button id="fpExportBtn">💾 存圖</button>
+        <label class="fp-topbar-upload-btn">
           📷 樓下
           <input type="file" accept="image/*" id="fpBgUpload" style="display:none">
         </label>
-        <label class="fp-topbar-upload-btn" title="上傳樓上底圖 Upload Upper floor">
+        <label class="fp-topbar-upload-btn">
           📷 樓上
           <input type="file" accept="image/*" id="fpBgUpload2" style="display:none">
         </label>
-        <button id="fpFullscreenBtn" title="全螢幕 Fullscreen">⛶</button>
-        <button id="fpClearBtn">清空 Clear</button>
-        <button class="fp-collapse-btn" id="fpCollapseBtn">收合 Collapse ‹</button>
+        <button id="fpFullscreenBtn" title="全螢幕">⛶</button>
+        <button id="fpClearBtn">清空</button>
+        <button class="fp-collapse-btn" id="fpCollapseBtn">收合 ‹</button>
       </div>
     </div>
     <div class="fp-drawbar" id="fpDrawbar">
