@@ -125,24 +125,25 @@
   /* Below tablet width, stack: floor plan pins to top via sticky positioning
      so it never scrolls out of view, even when results below it are long. */
   @media (max-width: 880px) {
+    /* Always left/right split even on small screens — never stack vertically */
     body { overflow: hidden; height: 100vh; }
     .shell {
-      flex-direction: column;
+      flex-direction: row;
       height: 100vh;
       overflow: hidden;
     }
     .shell .fp-pane {
-      flex: 0 0 48%;
-      height: 48vh;
-      min-height: 0;
-      border-right: none;
-      border-bottom: 1px solid var(--line);
+      flex: 0 0 50%;
+      width: 50%;
+      max-width: 50%;
+      height: 100vh;
       overflow: hidden;
     }
     .shell .qa-pane {
-      flex: 1 1 0;
-      min-height: 0;
-      height: 0;
+      flex: 0 0 50%;
+      width: 50%;
+      max-width: 50%;
+      height: 100vh;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
