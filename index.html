@@ -128,7 +128,7 @@
   }
   /* Below tablet width, stack: floor plan pins to top via sticky positioning
      so it never scrolls out of view, even when results below it are long. */
-  @media (max-width: 880px) and (orientation: portrait) {
+  @media (max-width: 1024px) and (orientation: portrait) {
     /* Portrait: canvas on top, assessment below */
     body { overflow: hidden; height: 100vh; }
     .shell {
@@ -155,7 +155,7 @@
       -webkit-overflow-scrolling: touch;
     }
   }
-  @media (max-width: 880px) and (orientation: landscape) {
+  @media (max-width: 1024px) and (orientation: landscape) {
     /* Landscape: left/right split */
     body { overflow: hidden; height: 100vh; }
     .shell {
