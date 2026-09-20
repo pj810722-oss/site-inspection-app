@@ -128,8 +128,35 @@
   }
   /* Below tablet width, stack: floor plan pins to top via sticky positioning
      so it never scrolls out of view, even when results below it are long. */
-  @media (max-width: 880px) {
-    /* Always left/right split even on small screens — never stack vertically */
+  @media (max-width: 880px) and (orientation: portrait) {
+    /* Portrait: canvas on top, assessment below */
+    body { overflow: hidden; height: 100vh; }
+    .shell {
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .shell .fp-pane {
+      flex: 0 0 45%;
+      width: 100%;
+      max-width: 100%;
+      height: 45vh;
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+      overflow: hidden;
+    }
+    .shell .qa-pane {
+      flex: 1 1 0;
+      width: 100%;
+      max-width: 100%;
+      min-height: 0;
+      height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+  @media (max-width: 880px) and (orientation: landscape) {
+    /* Landscape: left/right split */
     body { overflow: hidden; height: 100vh; }
     .shell {
       flex-direction: row;
