@@ -1366,7 +1366,10 @@
     overflow: hidden;
   }
   /* Landscape: tray moves below the canvas so canvas gets full width */
-  @media (orientation: landscape) {
+  /* Landscape tray layout — only applies when fp-pane is the full-width panel
+     (i.e. on small screens in landscape). On iPad (wide screen), shell stays
+     left/right split so we only change fp-body internals, not the shell. */
+  @media (orientation: landscape) and (max-width: 880px) {
     .fp-body {
       flex-direction: column;
     }
@@ -1385,15 +1388,9 @@
       overflow-y: hidden;
       gap: 5px;
     }
-    .fp-tray-label {
-      display: none !important;
-    }
-    .fp-tray-divider {
-      display: none !important;
-    }
-    .fp-tray-grid {
-      display: contents !important;
-    }
+    .fp-tray-label { display: none !important; }
+    .fp-tray-divider { display: none !important; }
+    .fp-tray-grid { display: contents !important; }
     .fp-tray-btn {
       width: auto !important;
       min-width: 52px;
