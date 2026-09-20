@@ -124,11 +124,13 @@
     .shell {
       flex-direction: column;
       height: auto;
+      min-height: 100vh;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
     .shell .fp-pane {
-      height: 42vh;
+      height: 45vh;
+      min-height: 300px;
       flex: 0 0 auto;
       border-right: none;
       border-bottom: 1px solid var(--line);
@@ -137,9 +139,11 @@
       z-index: 30;
     }
     .shell .qa-pane {
-      flex: 0 0 auto;
+      flex: 1 1 auto;
+      min-height: 50vh;
       height: auto;
-      overflow-y: visible;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
   }
   .fp-collapsed .fp-pane { display: none; }
