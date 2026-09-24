@@ -3065,6 +3065,34 @@ function splitBilingual(str, lang) {
   return lang === 'en' ? enPart : zhPart;
 }
 
+
+/* ---- Translation for the WeChat summary (EN / 中文 buttons) ---- */
+async function translateText(text, target) {
+  const tl = target === 'en' ? 'en' : 'zh-TW';
+  const sl = target === 'en' ? 'zh-TW' : 'en';
+  // 1) Google Translate web endpoint — handles the whole multi-line text at once
+  try {
+    const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=auto&tl=' + tl + '&q=' + encodeURIComponent(text);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('google ' + res.status);
+    const data = await res.json();
+    const out = (data[0] || []).map(seg => seg[0]).join('');
+    if (out.trim()) return out;
+    throw new Error('empty');
+  } catch (e1) {
+    // 2) Backup: MyMemory, line by line so the report's line layout is kept
+    const lines = text.split('\n');
+    const outLines = await Promise.all(lines.map(async line => {
+      if (!line.trim()) return line;
+      const r = await fetch('https://api.mymemory.translated.net/get?langpair=' + sl + '|' + tl + '&q=' + encodeURIComponent(line));
+      if (!r.ok) throw new Error('mymemory ' + r.status);
+      const d = await r.json();
+      return (d.responseData && d.responseData.translatedText) || line;
+    }));
+    return outLines.join('\n');
+  }
+}
+
 function buildWeChatSummary(lang) {
   lang = lang || 'zh';
   const name = state.answers['customer_name'] || '';
@@ -4118,21 +4146,44 @@ function attachResultEvents() {
   const regenBtn = document.getElementById('regenSummaryBtn');
   if (regenBtn) {
     regenBtn.addEventListener('click', () => {
+      state.summaryCache = {};
       state.wechatSummary = buildWeChatSummary(state.summaryLang || 'zh');
       render();
     });
   }
   document.querySelectorAll('.lang-toggle-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const lang = btn.getAttribute('data-lang');
-      if (lang === state.summaryLang) return;
-      state.summaryLang = lang;
-      // Switching language regenerates the summary from current answers rather
-      // than translating in place — this keeps any manual edits in the OLD
-      // language from leaking into the new one, since a fresh single-language
-      // build is the only way to guarantee a clean result.
-      state.wechatSummary = buildWeChatSummary(lang);
-      render();
+      const from = state.summaryLang || 'zh';
+      if (lang === from) return;
+      const ta = document.getElementById('wechatSummaryText');
+      const current = ta ? ta.value : (state.wechatSummary || '');
+      if (!state.summaryCache) state.summaryCache = {};
+
+      // Unchanged since last switch → just show the saved other-language copy
+      // (so switching back and forth never degrades your original text)
+      if (state.summaryCache[from] === current && state.summaryCache[lang]) {
+        state.summaryLang = lang;
+        state.wechatSummary = state.summaryCache[lang];
+        render();
+        return;
+      }
+
+      // Otherwise translate exactly what is in the box, including typed edits
+      document.querySelectorAll('.lang-toggle-btn').forEach(b => b.disabled = true);
+      if (ta) { ta.disabled = true; ta.value = (lang === 'en' ? 'Translating…\n\n' : '翻譯中…\n\n') + current; }
+      try {
+        const translated = await translateText(current, lang);
+        state.summaryCache[from] = current;
+        state.summaryCache[lang] = translated;
+        state.summaryLang = lang;
+        state.wechatSummary = translated;
+        render();
+      } catch (err) {
+        if (ta) { ta.disabled = false; ta.value = current; }
+        document.querySelectorAll('.lang-toggle-btn').forEach(b => b.disabled = false);
+        alert('翻譯失敗，請確認網路連線後再試一次。\nTranslation failed — check your connection and try again.');
+      }
     });
   });
   const copyBtn = document.getElementById('copySummaryBtn');
