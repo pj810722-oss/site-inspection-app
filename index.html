@@ -4100,14 +4100,57 @@ function attachResultEvents() {
     });
   }
   document.querySelectorAll('.lang-toggle-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const lang = btn.getAttribute('data-lang');
       if (lang === state.summaryLang) return;
       state.summaryLang = lang;
-      // Switching language regenerates the summary from current answers rather
-      // than translating in place — this keeps any manual edits in the OLD
-      // language from leaking into the new one, since a fresh single-language
-      // build is the only way to guarantee a clean result.
+
+      // Collect all note texts to translate
+      const notesToTranslate = [];
+      Object.values(state.noteLists).forEach(list => {
+        list.forEach(note => { if (note.text) notesToTranslate.push(note); });
+      });
+
+      if (notesToTranslate.length > 0) {
+        // Show loading state
+        const textarea = document.getElementById('wechatSummaryTextarea');
+        if (textarea) textarea.value = lang === 'en' ? 'Translating notes...' : '翻譯備註中...';
+
+        try {
+          const targetLang = lang === 'en' ? 'English' : 'Traditional Chinese';
+          const texts = notesToTranslate.map((n, i) => `${i+1}. ${n.text}`).join('\n');
+          const res = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'claude-sonnet-4-6',
+              max_tokens: 1000,
+              messages: [{
+                role: 'user',
+                content: `Translate the following notes to ${targetLang}. Return ONLY the translated lines in the same numbered format, no explanation:\n\n${texts}`
+              }]
+            })
+          });
+          const data = await res.json();
+          const translated = data.content?.[0]?.text || '';
+          const lines = translated.split('\n').filter(l => l.trim());
+
+          // Update note texts with translations
+          let idx = 0;
+          Object.values(state.noteLists).forEach(list => {
+            list.forEach(note => {
+              if (note.text && idx < lines.length) {
+                const line = lines[idx].replace(/^\d+\.\s*/, '').trim();
+                if (line) note.text = line;
+                idx++;
+              }
+            });
+          });
+        } catch(e) {
+          console.log('Translation failed, using original text');
+        }
+      }
+
       state.wechatSummary = buildWeChatSummary(lang);
       render();
     });
