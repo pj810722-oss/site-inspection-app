@@ -1,25 +1,29 @@
-// Service Worker - 每次部署自動更新，不需要手動清快取
-const VERSION = 'v70'; // 每次推送自動更新這個版本號
+// Service Worker — every open fetches the latest version straight from the
+// server (bypassing the browser's 10-minute cache), so the same fixed URL
+// always shows the newest app. Falls back to the last copy only when offline.
+const VERSION = 'v91';
+const CACHE = 'site-inspection-' + VERSION;
 
-self.addEventListener('install', (e) => {
-  self.skipWaiting(); // 立即啟用新版本
-});
+self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', (e) => {
-  // 清除所有舊快取
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.map(key => caches.delete(key)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
-// Network first — 永遠先抓最新版，抓不到才用快取
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
+  const req = e.request;
+  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   e.respondWith(
-    fetch(e.request)
-      .then(res => res)
-      .catch(() => caches.match(e.request))
+    fetch(req, { cache: 'no-store' })          // skip the HTTP cache — always latest
+      .then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(req, copy)); // keep an offline copy
+        return res;
+      })
+      .catch(() => caches.match(req))          // offline: use last saved copy
   );
 });
