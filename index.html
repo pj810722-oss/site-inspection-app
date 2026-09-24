@@ -2239,7 +2239,7 @@
           <input type="file" accept="image/*" id="fpBgUpload" style="display:none">
         </label>
         <label class="fp-double-upload-btn" style="margin-top:8px;">
-          📷 樓上 Upper Floor
+          📷 樓上 First Floor (Upstairs)
           <span id="fpUpperStatus" class="fp-upload-status">未上傳</span>
           <input type="file" accept="image/*" id="fpBgUpload2" style="display:none">
         </label>
@@ -4200,11 +4200,11 @@ function fpRenderCanvas() {
     bgHtml = `
       <div class="fp-bg-split fp-bg-split-h">
         <div class="fp-bg-half">
-          <div class="fp-bg-label">🏠 Ground</div>
+          <div class="fp-bg-label">🏠 Ground Floor</div>
           <img src="${fpBgImageSrc}" class="fp-bg-image-half">
         </div>
         <div class="fp-bg-half">
-          <div class="fp-bg-label">🏢 Upper</div>
+          <div class="fp-bg-label">🏢 First Floor (Upstairs)</div>
           <img src="${fpBgImageSrc2}" class="fp-bg-image-half">
         </div>
       </div>`;
@@ -5003,20 +5003,18 @@ async function fpExportImage() {
     img.src = src;
   });
   if (fpBgImageSrc && fpBgImageSrc2) {
-    const orient = fpGetOrientation();
-    if (orient === 'landscape') {
-      await drawImg(fpBgImageSrc, 0, 0, W/2, H);
-      await drawImg(fpBgImageSrc2, W/2, 0, W/2, H);
-      ctx.fillStyle = 'rgba(15,45,114,0.75)'; ctx.fillRect(0,0,72,22); ctx.fillRect(W/2,0,68,22);
-      ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Arial'; ctx.textBaseline = 'middle';
-      ctx.fillText('Ground', 6, 11); ctx.fillText('Upper', W/2+6, 11);
-    } else {
-      await drawImg(fpBgImageSrc, 0, 0, W, H/2);
-      await drawImg(fpBgImageSrc2, 0, H/2, W, H/2);
-      ctx.fillStyle = 'rgba(15,45,114,0.75)'; ctx.fillRect(0,0,72,22); ctx.fillRect(0,H/2,68,22);
-      ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Arial'; ctx.textBaseline = 'middle';
-      ctx.fillText('Ground', 6, 11); ctx.fillText('Upper', 6, H/2+11);
-    }
+    // Always side by side, matching what's shown on screen
+    await drawImg(fpBgImageSrc, 0, 0, W/2, H);
+    await drawImg(fpBgImageSrc2, W/2, 0, W/2, H);
+    const drawLabel = (text, x, y) => {
+      ctx.font = 'bold 12px Arial';
+      const tw = ctx.measureText(text).width;
+      ctx.fillStyle = 'rgba(15,45,114,0.8)'; ctx.fillRect(x, y, tw + 14, 22);
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(text, x + 7, y + 11);
+    };
+    drawLabel('Ground Floor', 0, 0);
+    drawLabel('First Floor (Upstairs)', W/2, 0);
   } else if (fpBgImageSrc) {
     await drawImg(fpBgImageSrc, 0, 0, W, H);
   } else if (fpBgImageSrc2) {
