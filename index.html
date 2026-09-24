@@ -2079,6 +2079,25 @@
   .cal-empty { text-align: center; color: var(--muted); font-size: 13px; padding: 20px 10px; }
   .cal-status { text-align: center; color: var(--muted); font-size: 13px; padding: 20px 10px; }
   .cal-error { text-align: center; color: var(--warn); font-size: 12.5px; padding: 10px; }
+
+  /* Quick Mode shown inline in the right-hand panel */
+  .quick-inline .quick-modal {
+    max-width: 640px;
+    max-height: none;
+    overflow: visible;
+    margin: 0 auto;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 20px 18px 0;
+  }
+  .quick-inline .qm-actions {
+    position: sticky;
+    bottom: 0;
+    background: var(--panel);
+    padding: 12px 0 16px;
+    border-top: 1px solid var(--line);
+    margin-top: 12px;
+  }
 </style>
 </head>
 <body>
@@ -3343,7 +3362,7 @@ function openQuickMode() {
     const el = document.getElementById(id);
     if (el) { el.textContent = '0'; const row = el.closest('.qm-fee-row'); if(row){row.style.borderColor='';row.style.background='';} }
   });
-  document.getElementById('quickModalOverlay').classList.add('open');
+  showQuickPanel();
 }
 
 function attachHubEvents() {
@@ -3421,6 +3440,30 @@ function attachScheduleEvents() {
   });
 }
 
+
+/* ---- Quick Mode lives inside the right-hand panel (not a popup), so the
+   floor plan on the left stays visible and usable while filling it in ---- */
+(function mountQuickPanel() {
+  const qaPane = document.getElementById('qaPane');
+  const box = document.querySelector('#quickModalOverlay .quick-modal');
+  const panel = document.createElement('div');
+  panel.id = 'quickPanel';
+  panel.className = 'quick-inline';
+  panel.style.display = 'none';
+  panel.appendChild(box);                       // moves the form (and its buttons' actions) as-is
+  qaPane.insertBefore(panel, document.getElementById('app'));
+  document.getElementById('quickModalOverlay').remove();
+})();
+function showQuickPanel() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('quickPanel').style.display = 'block';
+  document.getElementById('qaPane').scrollTop = 0;
+}
+function hideQuickPanel() {
+  document.getElementById('quickPanel').style.display = 'none';
+  document.getElementById('app').style.display = '';
+}
+
 /* ---- Quick Mode modal logic (attached once at startup) ---- */
 (function setupQuickMode() {
   let qmCount = null, qmType = null, qmComboKey = null;
@@ -3476,7 +3519,7 @@ function attachScheduleEvents() {
   });
 
   document.getElementById('qmCancelBtn').addEventListener('click', () => {
-    document.getElementById('quickModalOverlay').classList.remove('open');
+    hideQuickPanel();
   });
 
   document.querySelectorAll('[data-qmcount]').forEach(btn => {
@@ -3557,7 +3600,7 @@ function attachScheduleEvents() {
     }
     state.wechatSummary = null;
     state.view = "results";
-    document.getElementById('quickModalOverlay').classList.remove('open');
+    hideQuickPanel();
     render();
   });
 })();
