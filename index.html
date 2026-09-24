@@ -2180,6 +2180,14 @@
             <button class="qm-step-btn" data-target="qmQtyFlashing" data-dir="1">＋</button>
           </div>
         </div>
+        <div class="qm-fee-row">
+          <span class="qm-fee-label">水泵費 Pump fee</span>
+          <div class="qm-stepper">
+            <button class="qm-step-btn" data-target="qmQtyPump" data-dir="-1">－</button>
+            <span class="qm-step-val" id="qmQtyPump">0</span>
+            <button class="qm-step-btn" data-target="qmQtyPump" data-dir="1">＋</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -3289,7 +3297,7 @@ function openQuickMode() {
   ['qmFeeElec','qmFeeSwitch','qmFeeGas','qmFeeCeiling','qmFeeLadder','qmFeeStairs','qmFeeTin','qmFeeIndoor'].forEach(id => {
     const el = document.getElementById(id); if (el) el.checked = false;
   });
-  ['qmQtyHeight','qmQtyRemove','qmQtyBrick','qmQtyPipe','qmQtyFlashing'].forEach(id => {
+  ['qmQtyHeight','qmQtyRemove','qmQtyBrick','qmQtyPipe','qmQtyFlashing','qmQtyPump'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.textContent = '0'; const row = el.closest('.qm-fee-row'); if(row){row.style.borderColor='';row.style.background='';} }
   });
@@ -3489,6 +3497,7 @@ function attachScheduleEvents() {
       ['qmQtyBrick',    '雙磚費',   'Double brick fee'],
       ['qmQtyPipe',     '拉管費',   'Pipe fee'],
       ['qmQtyFlashing', 'Roof Pipe Flashing', 'Roof Pipe Flashing'],
+      ['qmQtyPump',     '水泵費', 'Pump fee'],
     ];
     stepFees.forEach(([id, zhLabel, enLabel]) => {
       const el = document.getElementById(id);
