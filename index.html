@@ -1562,7 +1562,7 @@
   }
   .fp-bg-image-half {
     width: 100%; height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     display: block;
     user-select: none;
     pointer-events: none;
@@ -4478,6 +4478,15 @@ function fpResizeCanvasTo(width, height) {
   }
 }
 
+function fpZoomToFit() {
+  // Zoom so the whole floor plan (both floors) fits inside the visible canvas area
+  const wrap = fpCanvasWrap;
+  if (!wrap || !fpCanvasWidth || !fpCanvasHeight) return;
+  fpZoom = Math.min(1, (wrap.clientWidth - 8) / fpCanvasWidth, (wrap.clientHeight - 8) / fpCanvasHeight);
+  fpApplyZoom(false);
+  wrap.scrollLeft = 0; wrap.scrollTop = 0;
+}
+
 function fpCalcDualCanvasSize(img1, img2) {
   // Determine combined canvas size based on orientation
   const orient = fpGetOrientation();
@@ -4489,15 +4498,11 @@ function fpCalcDualCanvasSize(img1, img2) {
     if (h > MAX_H) { w = w * (MAX_H / h); h = MAX_H; }
     return { w: Math.round(w), h: Math.round(h) };
   }
-  if (orient === 'landscape') {
-    // Side by side: width = sum of both (capped), height = max
-    const scale = Math.min(MAX_W / (img1.naturalWidth + img2.naturalWidth), MAX_H / Math.max(img1.naturalHeight, img2.naturalHeight), 1);
-    return { w: Math.round((img1.naturalWidth + img2.naturalWidth) * scale), h: Math.round(Math.max(img1.naturalHeight, img2.naturalHeight) * scale) };
-  } else {
-    // Stacked: height = sum, width = max
-    const scale = Math.min(MAX_W / Math.max(img1.naturalWidth, img2.naturalWidth), MAX_H / (img1.naturalHeight + img2.naturalHeight), 1);
-    return { w: Math.round(Math.max(img1.naturalWidth, img2.naturalWidth) * scale), h: Math.round((img1.naturalHeight + img2.naturalHeight) * scale) };
-  }
+  // Always side by side (matches the on-screen layout): two equal-width halves
+  const halfW = Math.max(img1.naturalWidth, img2.naturalWidth);
+  const H0 = Math.max(img1.naturalHeight, img2.naturalHeight);
+  const scale = Math.min(MAX_W / (halfW * 2), MAX_H / H0, 1);
+  return { w: Math.round(halfW * 2 * scale), h: Math.round(H0 * scale) };
 }
 
 function fpHandleBgUpload(file, slot) {
@@ -4520,6 +4525,7 @@ function fpHandleBgUpload(file, slot) {
       const size = fpCalcDualCanvasSize(img1 || img2, img1 && img2 ? img2 : null);
       fpResizeCanvasTo(size.w, size.h);
       fpRenderCanvas();
+      fpZoomToFit();
     };
     if (img1) { img1.onload = onLoad; img1.src = fpBgImageSrc; }
     if (img2) { img2.onload = onLoad; img2.src = fpBgImageSrc2; }
@@ -5066,8 +5072,18 @@ async function fpExportImage() {
   });
   if (fpBgImageSrc && fpBgImageSrc2) {
     // Always side by side, matching what's shown on screen
-    await drawImg(fpBgImageSrc, 0, 0, W/2, H);
-    await drawImg(fpBgImageSrc2, W/2, 0, W/2, H);
+    const drawFit = (src, x, y, bw, bh) => new Promise(res => {
+      const img = new Image();
+      img.onload = () => {
+        const s = Math.min(bw / img.naturalWidth, bh / img.naturalHeight);
+        const dw = img.naturalWidth * s, dh = img.naturalHeight * s;
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(x, y, bw, bh);
+        ctx.drawImage(img, x + (bw - dw) / 2, y + (bh - dh) / 2, dw, dh); res();
+      };
+      img.onerror = res; img.src = src;
+    });
+    await drawFit(fpBgImageSrc, 0, 0, W/2, H);
+    await drawFit(fpBgImageSrc2, W/2, 0, W/2, H);
     const drawLabel = (text, x, y) => {
       ctx.font = 'bold 12px Arial';
       const tw = ctx.measureText(text).width;
