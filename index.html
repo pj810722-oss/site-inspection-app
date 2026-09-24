@@ -2953,7 +2953,7 @@ function collectStickerFees() {
   // Count stickers by type from the floor plan canvas and generate fee entries.
   // These are separate from the questionnaire answers and override nothing —
   // they just add additional fee lines based on what's been placed on the canvas.
-  if (!window.fpStickers || fpStickers.length === 0) return [];
+  if (typeof fpStickers === 'undefined' || fpStickers.length === 0) return [];
   const counts = {};
   fpStickers.forEach(s => {
     counts[s.type] = (counts[s.type] || 0) + 1;
@@ -2964,6 +2964,7 @@ function collectStickerFees() {
   if (counts.remove) fees.push({ id: 'sticker_remove', text: `舊機移除費（外機） ×${counts.remove} Remove outdoor unit ×${counts.remove}`, source: 'canvas' });
   if (counts.replace) fees.push({ id: 'sticker_replace', text: `拆機費（內機） ×${counts.replace} Removal fee (indoor) ×${counts.replace}`, source: 'canvas' });
   if (counts.pump) fees.push({ id: 'sticker_pump', text: `水泵 ×${counts.pump} Pump ×${counts.pump}`, source: 'canvas' });
+  if (counts.ladder) fees.push({ id: 'sticker_ladder', text: `高空費 ×${counts.ladder} Height fee ×${counts.ladder}`, source: 'canvas' });
   return fees;
 }
 
@@ -4969,6 +4970,7 @@ async function fpExportImage() {
     { type: 'outdoor',     label: 'Outdoor Unit' },
     { type: 'room',        label: 'Room Number' },
     { type: 'switchboard', label: 'Switchboard' },
+    { type: 'ladder',      label: 'High Access' },
     { type: 'brick',       label: 'Double Brick Wall' },
     { type: 'flashing',    label: 'Roof Pipe Flashing' },
     { type: 'remove',      label: 'Remove Outdoor Unit' },
