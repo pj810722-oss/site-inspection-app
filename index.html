@@ -2149,7 +2149,7 @@
           </div>
         </div>
         <div class="qm-fee-row">
-          <span class="qm-fee-label">移除舊空調費 Removal fee</span>
+          <span class="qm-fee-label">內機拆除費 Indoor removal</span>
           <div class="qm-stepper">
             <button class="qm-step-btn" data-target="qmQtyRemove" data-dir="-1">－</button>
             <span class="qm-step-val" id="qmQtyRemove">0</span>
@@ -2317,7 +2317,7 @@
           </div>
           <div class="fp-tray-btn" id="fpAddRemove">
             <svg viewBox="0 0 60 60"><use href="#icon-remove"/></svg>
-            移除外機
+            Gas Heater拆除
           </div>
           <div class="fp-tray-btn" id="fpAddReplace">
             <svg viewBox="0 0 60 60"><use href="#icon-replace"/></svg>
@@ -2581,7 +2581,7 @@ const SECTIONS = [
         countLabel: "移除舊機台數 Number of units to remove",
         countDefault: "1",
         feeIf: "是",
-        feeTextFn: (count) => `拆機費 ×${count || 1} Removal fee ×${count || 1}`
+        feeTextFn: (count) => `內機拆除費 ×${count || 1} / Indoor unit removal fee ×${count || 1}`
       },
       {
         id: "drainage_ok",
@@ -2669,7 +2669,7 @@ const SECTIONS = [
         countLabel: "移除舊機台數 Number of units to remove",
         countDefault: "1",
         feeIf: "是",
-        feeTextFn: (count) => `舊機移除費 ×${count || 1} Remove old unit ×${count || 1}`
+        feeTextFn: (count) => `Gas Heater拆除費 ×${count || 1} / Gas heater removal fee ×${count || 1}`
       },
       {
         id: "gh_condition",
@@ -2961,8 +2961,8 @@ function collectStickerFees() {
   const fees = [];
   if (counts.brick) fees.push({ id: 'sticker_brick', text: `雙磚費 ×${counts.brick}間 Double brick fee ×${counts.brick}`, source: 'canvas' });
   if (counts.flashing) fees.push({ id: 'sticker_flashing', text: `Roof Pipe Flashing ×${counts.flashing}`, source: 'canvas' });
-  if (counts.remove) fees.push({ id: 'sticker_remove', text: `舊機移除費（外機） ×${counts.remove} Remove outdoor unit ×${counts.remove}`, source: 'canvas' });
-  if (counts.replace) fees.push({ id: 'sticker_replace', text: `拆機費（內機） ×${counts.replace} Removal fee (indoor) ×${counts.replace}`, source: 'canvas' });
+  if (counts.remove) fees.push({ id: 'sticker_remove', text: `Gas Heater拆除費 ×${counts.remove} / Gas heater removal fee ×${counts.remove}`, source: 'canvas' });
+  if (counts.replace) fees.push({ id: 'sticker_replace', text: `內機拆除費 ×${counts.replace} / Indoor unit removal fee ×${counts.replace}`, source: 'canvas' });
   if (counts.pump) fees.push({ id: 'sticker_pump', text: `水泵 ×${counts.pump} Pump ×${counts.pump}`, source: 'canvas' });
   if (counts.ladder) fees.push({ id: 'sticker_ladder', text: `高空費 ×${counts.ladder} Height fee ×${counts.ladder}`, source: 'canvas' });
   return fees;
@@ -3044,6 +3044,8 @@ function splitBilingual(str, lang) {
   // string. This splits on the first run of ASCII letters to separate the two
   // halves, so the WeChat summary can show a clean single-language report.
   if (!str) return str;
+  // Explicit separator " / " for names that start with English (e.g. Gas Heater拆除費)
+  if (str.includes(' / ')) { const [zh, en] = str.split(' / '); return lang === 'en' ? en.trim() : zh.trim(); }
   const match = str.match(/^([^a-zA-Z]*)([a-zA-Z][\s\S]*)$/);
   if (!match) return str; // no ASCII letters found, string is already pure Chinese
   const zhPart = match[1].trim();
@@ -3479,7 +3481,7 @@ function attachScheduleEvents() {
     const checkFees = [
       ['qmFeeElec',    '拉電費 ×1 Cabling fee ×1'],
       ['qmFeeSwitch',  'Mini Switch ×2'],
-      ['qmFeeGas',     '舊機移除費 ×1 Remove Gas Heater ×1'],
+      ['qmFeeGas',     'Gas Heater拆除費 ×1 / Gas heater removal fee ×1'],
       ['qmFeeCeiling', '高天花費 ×1 High ceiling fee ×1'],
       ['qmFeeLadder',  '高梯費 ×1 High ladder fee ×1'],
       ['qmFeeStairs',  '階梯搬運費 ×1 Stair carry fee ×1'],
@@ -3494,7 +3496,7 @@ function attachScheduleEvents() {
     // Collect stepper fees (variable quantity)
     const stepFees = [
       ['qmQtyHeight',   '高空費',   'Height fee'],
-      ['qmQtyRemove',   '移除舊空調費', 'Removal fee'],
+      ['qmQtyRemove',   '內機拆除費', 'Indoor unit removal fee'],
       ['qmQtyBrick',    '雙磚費',   'Double brick fee'],
       ['qmQtyPipe',     '拉管費',   'Pipe fee'],
       ['qmQtyFlashing', 'Roof Pipe Flashing', 'Roof Pipe Flashing'],
@@ -3503,7 +3505,7 @@ function attachScheduleEvents() {
     stepFees.forEach(([id, zhLabel, enLabel]) => {
       const el = document.getElementById(id);
       const qty = el ? (parseInt(el.textContent) || 0) : 0;
-      if (qty > 0) state.manualFees.push(`${zhLabel} ×${qty} ${enLabel} ×${qty}`);
+      if (qty > 0) state.manualFees.push(`${zhLabel} ×${qty} / ${enLabel} ×${qty}`);
     });
 
     state.answers['indoor_count'] = qmCount;
@@ -4973,7 +4975,7 @@ async function fpExportImage() {
     { type: 'ladder',      label: 'High Access' },
     { type: 'brick',       label: 'Double Brick Wall' },
     { type: 'flashing',    label: 'Roof Pipe Flashing' },
-    { type: 'remove',      label: 'Remove Outdoor Unit' },
+    { type: 'remove',      label: 'Remove Gas Heater' },
     { type: 'replace',     label: 'Replace Indoor Unit' },
     { type: 'pump',        label: 'Condensate Pump' },
   ];
