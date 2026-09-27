@@ -2098,6 +2098,14 @@
     border-top: 1px solid var(--line);
     margin-top: 12px;
   }
+  .fp-opacity { display:flex; align-items:center; gap:6px; font-size:15px; margin-left:auto; }
+  .fp-opacity input { width: 110px; accent-color: var(--accent); }
+  .fp-poly-bar { display:flex; align-items:center; gap:8px; padding:6px 10px; background:var(--green-soft);
+    border-bottom:1px solid #b0d8b2; font-size:12px; color:var(--green); font-weight:600; flex:0 0 auto; }
+  .fp-poly-bar span { flex:1; }
+  .fp-poly-bar button { padding:6px 12px; border-radius:7px; font-weight:700; font-size:12px; cursor:pointer;
+    border:1.5px solid var(--green); background:#fff; color:var(--green); }
+  #fpPolyDone { background: var(--green); color:#fff; }
 </style>
 </head>
 <body>
@@ -2287,12 +2295,22 @@
         <button class="fp-color-btn" data-color="#1e3a6e" style="background:#1e3a6e" title="深藍 Dark Blue"></button>
         <button class="fp-color-btn" data-color="#d63b2f" style="background:#d63b2f" title="紅 Red"></button>
         <button class="fp-color-btn" data-color="#e8941a" style="background:#e8941a" title="橘黃 Orange"></button>
+        <button class="fp-tool-btn" id="fpPenBtn" title="手繪 Pen">✏️</button>
+        <button class="fp-tool-btn" id="fpPolyBtn" title="描外框 Outline（點角落）">⬠</button>
         <button class="fp-tool-btn" id="fpTextBtn" title="文字標註 Text">T</button>
         <button class="fp-tool-btn" id="fpLineBtn" title="直線 Line">╱</button>
         <button class="fp-tool-btn" id="fpRectBtn" title="方形 Rectangle">▭</button>
         <button class="fp-tool-btn" id="fpEraserBtn" title="橡皮擦 Eraser">🧹</button>
         <button class="fp-tool-btn" id="fpUndoBtn" title="撤銷 Undo">↩</button>
       </div>
+      <label class="fp-opacity" title="底圖深淺 Background opacity">🖼
+        <input type="range" id="fpBgOpacity" min="10" max="100" value="100">
+      </label>
+    </div>
+    <div class="fp-poly-bar" id="fpPolyBar" style="display:none;">
+      <span id="fpPolyHint">點屋頂的每個角落，點回第一個點完成 Tap each roof corner, tap the first point to finish</span>
+      <button id="fpPolyDone">✓ 完成</button>
+      <button id="fpPolyCancel">✕ 取消</button>
     </div>
     <div class="fp-body">
       <div class="fp-canvas-wrap" id="fpCanvasWrap">
@@ -4271,6 +4289,8 @@ let fpDrawColor = '#1e3a6e';
 let fpEraserOn = false;
 let fpDrawTool = 'pen';
 let fpShapeStart = null;
+let fpPolyPoints = [];   // corners of the outline being traced
+let fpBgOpacity = 1;     // base image opacity (fade to trace)
 let fpStrokeHistory = [];
 let fpIsDrawing = false;
 let fpLastPoint = null;
@@ -4741,6 +4761,8 @@ document.getElementById('fpClearBtn').addEventListener('click', () => {
     fpShapeStart = null;
     fpPendingSticker = null;
     fpCancelPlacing();
+    fpPolyPoints = [];
+    fpBgOpacity = 1; document.getElementById('fpBgOpacity').value = 100; document.getElementById('fpBgLayer').style.opacity = 1;
     // Force-clear all three canvas layers immediately
     document.getElementById('fpBgLayer').innerHTML = '';
     document.getElementById('fpStickerLayer').innerHTML = '';
@@ -4824,6 +4846,7 @@ function fpSetMode(mode) {
   document.getElementById('fpDrawTools').style.display = mode === 'draw' ? 'flex' : 'none';
   document.getElementById('fpStickerLayer').style.pointerEvents = mode === 'draw' ? 'none' : 'auto';
   fpDrawCanvas.style.pointerEvents = mode === 'draw' ? 'auto' : 'none';
+  if (typeof fpPolyPoints !== 'undefined') fpSetActiveTool();
 }
 
 document.getElementById('fpModeMove').addEventListener('click', () => fpSetMode('move'));
@@ -4837,6 +4860,10 @@ function fpSetActiveTool() {
   document.getElementById('fpLineBtn').setAttribute('data-active', (!fpEraserOn && fpDrawTool === 'line') ? 'true' : 'false');
   document.getElementById('fpRectBtn').setAttribute('data-active', (!fpEraserOn && fpDrawTool === 'rect') ? 'true' : 'false');
   document.getElementById('fpTextBtn').setAttribute('data-active', (!fpEraserOn && fpDrawTool === 'text') ? 'true' : 'false');
+  document.getElementById('fpPenBtn').setAttribute('data-active', (!fpEraserOn && fpDrawTool === 'pen') ? 'true' : 'false');
+  document.getElementById('fpPolyBtn').setAttribute('data-active', (!fpEraserOn && fpDrawTool === 'poly') ? 'true' : 'false');
+  document.getElementById('fpPolyBar').style.display = (fpMode === 'draw' && !fpEraserOn && fpDrawTool === 'poly') ? 'flex' : 'none';
+  if (fpDrawTool !== 'poly' || fpEraserOn || fpMode !== 'draw') fpPolyCancel();
 }
 
 document.querySelectorAll('.fp-color-btn').forEach(btn => {
@@ -4861,6 +4888,75 @@ document.getElementById('fpLineBtn').addEventListener('click', () => {
   fpEraserOn = false;
   fpSetActiveTool();
 });
+document.getElementById('fpPenBtn').addEventListener('click', () => { fpDrawTool = 'pen'; fpEraserOn = false; fpSetActiveTool(); });
+document.getElementById('fpPolyBtn').addEventListener('click', () => { fpDrawTool = 'poly'; fpEraserOn = false; fpSetActiveTool(); });
+document.getElementById('fpPolyDone').addEventListener('click', () => fpPolyFinish());
+document.getElementById('fpPolyCancel').addEventListener('click', () => fpPolyCancel());
+
+/* ---- Outline tool: tap corners -> clean closed outline ---- */
+function fpPolyPreview(cursor) {
+  const snap = fpStrokeHistory[fpStrokeHistory.length - 1];
+  if (snap) fpDrawCtx.putImageData(snap, 0, 0);
+  const pts = fpPolyPoints;
+  if (!pts.length) return;
+  fpDrawCtx.globalCompositeOperation = 'source-over';
+  fpDrawCtx.strokeStyle = fpDrawColor;
+  fpDrawCtx.lineWidth = 4;
+  fpDrawCtx.beginPath();
+  fpDrawCtx.moveTo(pts[0].x, pts[0].y);
+  pts.slice(1).forEach(p => fpDrawCtx.lineTo(p.x, p.y));
+  if (cursor) fpDrawCtx.lineTo(cursor.x, cursor.y);
+  fpDrawCtx.stroke();
+  pts.forEach((p, i) => {
+    fpDrawCtx.beginPath();
+    fpDrawCtx.arc(p.x, p.y, i === 0 ? 9 : 5, 0, Math.PI * 2);
+    fpDrawCtx.fillStyle = i === 0 ? '#3a8c3f' : fpDrawColor;
+    fpDrawCtx.fill();
+  });
+}
+function fpPolyFinish() {
+  const pts = fpPolyPoints;
+  if (pts.length < 3) { fpPolyCancel(); return; }
+  const snap = fpStrokeHistory[fpStrokeHistory.length - 1];
+  if (snap) fpDrawCtx.putImageData(snap, 0, 0);
+  fpDrawCtx.globalCompositeOperation = 'source-over';
+  fpDrawCtx.strokeStyle = fpDrawColor;
+  fpDrawCtx.lineWidth = 5;
+  fpDrawCtx.lineJoin = 'miter';
+  fpDrawCtx.beginPath();
+  fpDrawCtx.moveTo(pts[0].x, pts[0].y);
+  pts.slice(1).forEach(p => fpDrawCtx.lineTo(p.x, p.y));
+  fpDrawCtx.closePath();
+  fpDrawCtx.stroke();
+  fpDrawCtx.lineJoin = 'round';
+  fpPolyPoints = [];
+}
+function fpPolyCancel() {
+  if (!fpPolyPoints || !fpPolyPoints.length) return;
+  const snap = fpStrokeHistory.pop();
+  if (snap) fpDrawCtx.putImageData(snap, 0, 0);
+  fpPolyPoints = [];
+}
+function fpPolyTap(pt) {
+  const pts = fpPolyPoints;
+  if (pts.length >= 3) {
+    const d = Math.hypot(pt.x - pts[0].x, pt.y - pts[0].y);
+    if (d < 22 / fpZoom) { fpPolyFinish(); return; }
+  }
+  if (!pts.length) fpSaveStrokeSnapshot();
+  pts.push(pt);
+  fpPolyPreview();
+}
+fpDrawCanvas.addEventListener('pointermove', (e) => {
+  if (fpMode === 'draw' && fpDrawTool === 'poly' && !fpEraserOn && fpPolyPoints.length) fpPolyPreview(fpCanvasPoint(e));
+});
+
+/* ---- Fade the base image so the outline is easier to see ---- */
+document.getElementById('fpBgOpacity').addEventListener('input', (e) => {
+  fpBgOpacity = parseInt(e.target.value, 10) / 100;
+  document.getElementById('fpBgLayer').style.opacity = fpBgOpacity;
+});
+
 document.getElementById('fpRectBtn').addEventListener('click', () => {
   fpDrawTool = 'rect';
   fpEraserOn = false;
@@ -4932,6 +5028,13 @@ fpDrawCanvas.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     const pt = fpCanvasPoint(e);
     fpPlaceTextInput(pt.x, pt.y);
+    return;
+  }
+
+  // Outline tool: each tap adds a corner
+  if (!fpEraserOn && fpDrawTool === 'poly') {
+    e.preventDefault();
+    fpPolyTap(fpCanvasPoint(e));
     return;
   }
 
@@ -5113,6 +5216,7 @@ async function fpExportImage() {
     img.onerror = res;
     img.src = src;
   });
+  ctx.globalAlpha = fpBgOpacity;
   if (fpBgImageSrc && fpBgImageSrc2) {
     // Always side by side, matching what's shown on screen
     const drawFit = (src, x, y, bw, bh) => new Promise(res => {
@@ -5134,6 +5238,7 @@ async function fpExportImage() {
       ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
       ctx.fillText(text, x + 7, y + 11);
     };
+    ctx.globalAlpha = 1;
     drawLabel('Ground Floor', 0, 0);
     drawLabel('First Floor (Upstairs)', W/2, 0);
   } else if (fpBgImageSrc) {
@@ -5142,6 +5247,7 @@ async function fpExportImage() {
     await drawImg(fpBgImageSrc2, 0, 0, W, H);
   }
 
+  ctx.globalAlpha = 1;
   // 2. drawings + stickers
   ctx.drawImage(fpDrawCanvas, 0, 0);
   for (const s of fpStickers) await fpDrawStickerToExportCanvas(ctx, s);
