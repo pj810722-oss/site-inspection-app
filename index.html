@@ -2246,7 +2246,6 @@
         <button id="fpExportBtn">💾 儲存平面圖</button>
         <button id="fpFullscreenBtn" title="全螢幕">⛶</button>
         <button id="fpClearBtn">清空</button>
-        <button class="fp-collapse-btn" id="fpCollapseBtn">收合 ‹</button>
       </div>
     </div>
 
@@ -4776,10 +4775,6 @@ document.getElementById('fpClearBtn').addEventListener('click', () => {
     fpCanvas.style.height = '650px';
     fpRenderCanvas();
   });
-});
-document.getElementById('fpCollapseBtn').addEventListener('click', () => {
-  const isCollapsed = shellEl.classList.toggle('fp-collapsed');
-  document.getElementById('fpCollapseBtn').textContent = isCollapsed ? '展開 ›' : '收合 ‹';
 });
 
 document.getElementById('fpFullscreenBtn').addEventListener('click', () => {
