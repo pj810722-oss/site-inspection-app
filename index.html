@@ -1553,7 +1553,10 @@
     display: flex;
     pointer-events: none;
   }
-  .fp-bg-split-h { flex-direction: row; }
+  .fp-bg-split-h { flex-direction: row; gap: 28px;
+    background: linear-gradient(to right, transparent calc(50% - 14px), #e2e8f0 calc(50% - 14px), #e2e8f0 calc(50% - 1.5px),
+      #64748b calc(50% - 1.5px), #64748b calc(50% + 1.5px), #e2e8f0 calc(50% + 1.5px), #e2e8f0 calc(50% + 14px), transparent calc(50% + 14px)); }
+  .fp-bg-split-h .fp-bg-half { background: #fff; }
   .fp-bg-split-v { flex-direction: column; }
   .fp-bg-half {
     flex: 1;
@@ -5225,8 +5228,11 @@ async function fpExportImage() {
       };
       img.onerror = res; img.src = src;
     });
-    await drawFit(fpBgImageSrc, 0, 0, W/2, H);
-    await drawFit(fpBgImageSrc2, W/2, 0, W/2, H);
+    const GAP = 28, HALF = (W - GAP) / 2;               // gap + divider between the two floors
+    await drawFit(fpBgImageSrc, 0, 0, HALF, H);
+    await drawFit(fpBgImageSrc2, HALF + GAP, 0, HALF, H);
+    ctx.fillStyle = '#e2e8f0'; ctx.fillRect(HALF, 0, GAP, H);
+    ctx.fillStyle = '#64748b'; ctx.fillRect(W / 2 - 1.5, 0, 3, H);
     const drawLabel = (text, x, y) => {
       ctx.font = 'bold 12px Arial';
       const tw = ctx.measureText(text).width;
@@ -5236,7 +5242,7 @@ async function fpExportImage() {
     };
     ctx.globalAlpha = 1;
     drawLabel('Ground Floor', 0, 0);
-    drawLabel('First Floor (Upstairs)', W/2, 0);
+    drawLabel('First Floor (Upstairs)', HALF + GAP, 0);
   } else if (fpBgImageSrc) {
     await drawImg(fpBgImageSrc, 0, 0, W, H);
   } else if (fpBgImageSrc2) {
