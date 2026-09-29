@@ -4313,11 +4313,7 @@ function fpGetOrientation() {
 }
 
 function fpRenderCanvas() {
-  const emptyState = (fpBgImageSrc || fpBgImageSrc2) ? '' : `
-    <div class="fp-canvas-empty" id="fpEmptyState">
-      <div>📷 上傳底圖開始標註<br>Upload floor plan to start</div>
-      <button id="fpEmptyUploadBtn">上傳底圖 Upload</button>
-    </div>`;
+  const emptyState = '';   // no floating upload box — use Upload Plan in the toolbar
 
   let bgHtml = '';
   if (fpBgImageSrc && fpBgImageSrc2) {
