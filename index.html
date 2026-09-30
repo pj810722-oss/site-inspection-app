@@ -2109,6 +2109,19 @@
   .fp-poly-bar button { padding:6px 12px; border-radius:7px; font-weight:700; font-size:12px; cursor:pointer;
     border:1.5px solid var(--green); background:#fff; color:var(--green); }
   #fpPolyDone { background: var(--green); color:#fff; }
+
+  /* ---- Navigate to the job in Google Maps ---- */
+  .hub-schedule-actions { flex-wrap: wrap; justify-content: flex-end; }
+  .hub-sched-nav { padding: 7px 12px; border-radius: 7px; background: var(--accent); color: #fff !important;
+    font-size: 12px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+  /* ---- Phone: schedule + assessment only (floor plan is for the iPad) ---- */
+  @media (max-width: 700px) {
+    .shell { flex-direction: column !important; }
+    .shell .fp-pane { display: none !important; }
+    .shell .qa-pane { flex: 1 1 auto !important; width: 100% !important; max-width: 100% !important;
+      height: 100vh !important; height: 100dvh !important; }
+    .hub-schedule-item { align-items: flex-start; }
+  }
 </style>
 </head>
 <body>
@@ -3245,6 +3258,7 @@ function renderScheduleItems() {
         <div class="hub-schedule-addr">${item.address}</div>
       </div>
       <div class="hub-schedule-actions">
+        ${item.address ? `<a class="hub-sched-nav" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.address)}&travelmode=driving" target="_blank" rel="noopener">導航 Navigate</a>` : ''}
         <button class="hub-sched-select" data-schedidx="${i}">選用 Use</button>
         <button class="hub-sched-remove" data-schedidx="${i}">✕</button>
       </div>
