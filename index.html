@@ -2122,6 +2122,20 @@
       height: 100vh !important; height: 100dvh !important; }
     .hub-schedule-item { align-items: flex-start; }
   }
+
+  /* ---- Sticker tray: two clearly separated rows — Units / Extra Fees ---- */
+  .fp-tray { display: grid !important; grid-template-columns: 78px 1fr; gap: 6px 8px !important; align-items: stretch; padding: 8px !important; }
+  .fp-tray .fp-tray-label { display: flex !important; align-items: center; justify-content: center; text-align: center;
+    font-size: 10.5px !important; font-weight: 700 !important; letter-spacing: .06em; text-transform: uppercase; line-height: 1.25;
+    border-radius: 8px; padding: 6px 4px !important; margin: 0 !important; }
+  .fp-tray .fp-tray-grid { display: flex !important; flex-wrap: wrap; gap: 5px; padding: 6px; border-radius: 8px; }
+  .fp-tray > .fp-tray-label { grid-column: 1 !important; }
+  .fp-tray > .fp-tray-grid { grid-column: 2 !important; min-width: 0; }
+  .fp-tray .fp-tray-label:first-child, .fp-tray .fp-tray-label:first-child + .fp-tray-grid { background: #eef2f7; }
+  .fp-tray .fp-tray-label:first-child { color: #334155; }
+  .fp-tray .fp-tray-divider { display: block !important; grid-column: 1 / -1; height: 1px !important; width: auto !important; margin: 0 !important; background: var(--line); }
+  .fp-tray .fp-tray-divider ~ .fp-tray-label, .fp-tray .fp-tray-divider ~ .fp-tray-grid { background: #fff4e5; }
+  .fp-tray .fp-tray-divider ~ .fp-tray-label { color: #b45309; }
 </style>
 </head>
 <body>
@@ -2360,16 +2374,16 @@
             <svg viewBox="0 0 60 60"><use href="#icon-switchboard"/></svg>
             電箱 Switchboard
           </div>
-          <div class="fp-tray-btn" id="fpAddLadder">
-            <svg viewBox="0 0 60 60"><use href="#icon-ladder"/></svg>
-            高空費 High Access
-          </div>
         </div>
 
         <div class="fp-tray-divider"></div>
 
-        <div class="fp-tray-label">費用 Fees</div>
+        <div class="fp-tray-label">附加費用 Extra Fees</div>
         <div class="fp-tray-grid">
+          <div class="fp-tray-btn" id="fpAddLadder">
+            <svg viewBox="0 0 60 60"><use href="#icon-ladder"/></svg>
+            高空費 High Access
+          </div>
           <div class="fp-tray-btn" id="fpAddBrick">
             <svg viewBox="0 0 60 60"><use href="#icon-brick"/></svg>
             Double Brick
