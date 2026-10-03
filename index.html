@@ -2162,6 +2162,33 @@
     body.m-form .shell .fp-pane { display: none !important; }
     body.m-form .shell .qa-pane { height: 100vh !important; height: 100dvh !important; }
   }
+
+  /* ---- Phone held sideways: compact left/right layout + view switch ---- */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .shell { flex-direction: row !important; }
+    .shell .fp-pane, .shell .qa-pane { height: 100vh !important; height: 100dvh !important; }
+    .fp-topbar { flex-wrap: nowrap !important; overflow-x: auto; gap: 5px !important; padding: 4px 6px !important; }
+    .fp-topbar button { padding: 4px 8px !important; font-size: 11px !important; white-space: nowrap; flex: 0 0 auto; }
+    .fp-drawbar { padding: 3px 6px !important; gap: 5px !important; flex-wrap: nowrap; overflow-x: auto; }
+    .fp-mode-btn { padding: 4px 8px !important; font-size: 11px !important; }
+    .fp-tool-btn { width: 28px !important; height: 28px !important; }
+    .fp-opacity input { width: 60px !important; }
+    .fp-tray { grid-template-columns: 50px 1fr !important; padding: 3px !important; gap: 3px 5px !important; }
+    .fp-tray .fp-tray-label { font-size: 8px !important; padding: 2px !important; }
+    .fp-tray > .fp-tray-grid { flex-wrap: nowrap !important; overflow-x: auto; padding: 2px 3px !important; }
+    .fp-tray-btn { font-size: 10px !important; padding: 2px 6px !important; white-space: nowrap; }
+    .fp-tray-btn svg { width: 16px !important; height: 16px !important; }
+    .fp-zoom-controls { transform: scale(.7); transform-origin: bottom right; }
+    .m-switch { display: flex; position: fixed; right: 10px; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); left: auto; transform: none;
+      z-index: 500; background: rgba(15,23,42,.92); border-radius: 999px; padding: 3px; gap: 2px; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+    .m-switch button { border: none; background: transparent; color: #cbd5e1; font-size: 11px; font-weight: 700; padding: 6px 11px; border-radius: 999px; white-space: nowrap; }
+    .m-switch button.on { background: #fff; color: #0f172a; }
+    .shell .qa-pane { padding-bottom: 50px; }
+    body.m-plan .shell .fp-pane { flex: 1 1 auto !important; width: 100% !important; max-width: 100% !important; padding-bottom: 44px; }
+    body.m-plan .shell .qa-pane { display: none !important; }
+    body.m-form .shell .fp-pane { display: none !important; }
+    body.m-form .shell .qa-pane { flex: 1 1 auto !important; width: 100% !important; max-width: 100% !important; }
+  }
 </style>
 </head>
 <body>
