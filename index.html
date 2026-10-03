@@ -2147,6 +2147,21 @@
   .fp-tray .fp-tray-divider { display: block !important; grid-column: 1 / -1; height: 1px !important; width: auto !important; margin: 0 !important; background: var(--line); }
   .fp-tray .fp-tray-divider ~ .fp-tray-label, .fp-tray .fp-tray-divider ~ .fp-tray-grid { background: #fff4e5; }
   .fp-tray .fp-tray-divider ~ .fp-tray-label { color: #b45309; }
+
+  /* ---- Phone: switch between floor plan / split / assessment ---- */
+  .m-switch { display: none; }
+  @media (max-width: 700px) {
+    .m-switch { display: flex; position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+      z-index: 500; background: rgba(15,23,42,.92); border-radius: 999px; padding: 4px; gap: 2px; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+    .m-switch button { border: none; background: transparent; color: #cbd5e1; font-size: 12px; font-weight: 700; padding: 8px 13px;
+      border-radius: 999px; white-space: nowrap; cursor: pointer; }
+    .m-switch button.on { background: #fff; color: #0f172a; }
+    .shell .qa-pane { padding-bottom: 64px; }
+    body.m-plan .shell .fp-pane { flex: 1 1 auto !important; height: 100vh !important; height: 100dvh !important; padding-bottom: 58px; border-bottom: none; }
+    body.m-plan .shell .qa-pane { display: none !important; }
+    body.m-form .shell .fp-pane { display: none !important; }
+    body.m-form .shell .qa-pane { height: 100vh !important; height: 100dvh !important; }
+  }
 </style>
 </head>
 <body>
@@ -5518,6 +5533,24 @@ window.addEventListener('load', () => {
 document.getElementById('calCancelBtn').addEventListener('click', () => {
   document.getElementById('calModalOverlay').classList.remove('open');
 });
+
+/* ---- Phone view switch: Plan / Split / Form ---- */
+(function () {
+  const bar = document.createElement('div');
+  bar.className = 'm-switch';
+  bar.innerHTML = '<button data-m="plan">平面圖 Plan</button><button data-m="split" class="on">各半 Split</button><button data-m="form">評估 Form</button>';
+  document.body.appendChild(bar);
+  bar.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const m = b.dataset.m;
+    document.body.classList.remove('m-plan', 'm-form');
+    if (m !== 'split') document.body.classList.add('m-' + m);
+    bar.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    setTimeout(() => {                       // refit the plan to its new size
+      if (m !== 'form' && (fpBgImageSrc || fpBgImageSrc2) && typeof fpZoomToFit === 'function') fpZoomToFit();
+    }, 80);
+  });
+})();
 </script>
 </body>
 </html>
