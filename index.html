@@ -2114,12 +2114,23 @@
   .hub-schedule-actions { flex-wrap: wrap; justify-content: flex-end; }
   .hub-sched-nav { padding: 7px 12px; border-radius: 7px; background: var(--accent); color: #fff !important;
     font-size: 12px; font-weight: 700; text-decoration: none; white-space: nowrap; }
-  /* ---- Phone: schedule + assessment only (floor plan is for the iPad) ---- */
+  /* ---- Phone: floor plan on top half, assessment on bottom half ---- */
   @media (max-width: 700px) {
     .shell { flex-direction: column !important; }
-    .shell .fp-pane { display: none !important; }
-    .shell .qa-pane { flex: 1 1 auto !important; width: 100% !important; max-width: 100% !important;
-      height: 100vh !important; height: 100dvh !important; }
+    .shell .fp-pane { display: flex !important; flex: 0 0 50dvh !important; height: 50vh !important; height: 50dvh !important;
+      width: 100% !important; max-width: 100% !important; border-right: none !important; border-bottom: 2px solid var(--line); }
+    .shell .qa-pane { flex: 1 1 auto !important; width: 100% !important; max-width: 100% !important; height: auto !important; min-height: 0 !important; }
+    .fp-topbar { flex-wrap: nowrap !important; overflow-x: auto; gap: 6px !important; padding: 6px 8px !important; -webkit-overflow-scrolling: touch; }
+    .fp-topbar button { padding: 6px 9px !important; font-size: 12px !important; white-space: nowrap; flex: 0 0 auto; }
+    .fp-drawbar { padding: 5px 8px !important; gap: 6px !important; flex-wrap: nowrap; overflow-x: auto; }
+    .fp-mode-btn { padding: 5px 9px !important; font-size: 12px !important; }
+    .fp-opacity input { width: 70px !important; }
+    .fp-tray { grid-template-columns: 54px 1fr !important; padding: 5px !important; gap: 4px 6px !important; }
+    .fp-tray .fp-tray-label { font-size: 8.5px !important; padding: 3px 2px !important; }
+    .fp-tray > .fp-tray-grid { flex-wrap: nowrap !important; overflow-x: auto; padding: 4px !important; -webkit-overflow-scrolling: touch; }
+    .fp-tray-btn { font-size: 10px !important; padding: 3px 7px !important; white-space: nowrap; }
+    .fp-tray-btn svg { width: 18px !important; height: 18px !important; }
+    .fp-zoom-controls { transform: scale(.8); transform-origin: bottom right; }
     .hub-schedule-item { align-items: flex-start; }
   }
 
