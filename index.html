@@ -5238,8 +5238,10 @@ function fpDrawStickerToExportCanvas(ctx, s) {
       replace: `<rect x="4" y="12" width="52" height="20" rx="4" fill="#7fc4e8" stroke="#4a9bc4" stroke-width="2"/><rect x="8" y="17" width="44" height="3" fill="#ffffff" opacity="0.7"/><rect x="8" y="22" width="30" height="2" fill="#4a9bc4" opacity="0.6"/><circle cx="48" cy="22" r="2" fill="#1a46a0"/><text x="30" y="50" font-size="10" font-weight="900" fill="#1a46a0" text-anchor="middle" font-family="Arial Black, Arial, sans-serif">REPLACE</text>`,
       pump: `<text x="30" y="44" font-size="46" font-weight="900" fill="#1A46A0" text-anchor="middle" font-family="Arial Black, Arial, sans-serif">P</text>`,
       switchboard: `<polygon points="34,4 18,32 28,32 24,56 42,26 31,26" fill="#D4AF37" stroke="#A0831A" stroke-width="1.5" stroke-linejoin="round"/>`,
+      ladder:`<rect x="14" y="4" width="5" height="52" rx="2.5" fill="#1a46a0"/><rect x="41" y="4" width="5" height="52" rx="2.5" fill="#1a46a0"/><rect x="14" y="10" width="32" height="4" rx="2" fill="#4a7fc4"/><rect x="14" y="22" width="32" height="4" rx="2" fill="#4a7fc4"/><rect x="14" y="34" width="32" height="4" rx="2" fill="#4a7fc4"/><rect x="14" y="46" width="32" height="4" rx="2" fill="#4a7fc4"/>`,
     };
-    const body = svgBodies[s.type] || svgBodies.indoor;
+    const body = svgBodies[s.type];
+    if (!body) { resolve(); return; }   // unknown type: skip instead of drawing an indoor unit
     const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">${body}</svg>`;
     const img = new Image();
     img.onload = () => {
