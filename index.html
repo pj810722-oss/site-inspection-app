@@ -2189,6 +2189,14 @@
     body.m-form .shell .fp-pane { display: none !important; }
     body.m-form .shell .qa-pane { flex: 1 1 auto !important; width: 100% !important; max-width: 100% !important; }
   }
+
+  /* ---- Combination guide ---- */
+  .combo-kw, .qm-combo-kw { display: block; font-size: 11.5px; font-weight: 500; color: var(--muted); margin-top: 2px; }
+  .combo-none, .qm-combo-none { color: #b45309 !important; background: #fff7e6; border: 1px solid #f3d19c; border-radius: 8px; padding: 10px 12px; font-size: 12.5px; line-height: 1.45; }
+  .qm-sys-opts .qm-opt { line-height: 1.3; }
+  .qm-sys-sub { font-size: 10.5px; font-weight: 500; opacity: .75; }
+  .qm-count-opts { flex-wrap: wrap; }
+  .qm-count-opts .qm-opt { flex: 1 1 calc(33.33% - 8px); min-width: 70px; }
 </style>
 </head>
 <body>
@@ -2226,17 +2234,21 @@
     <div class="qm-label">其他備註 Other Notes <span style="font-weight:400;opacity:0.6">（選填）</span></div>
     <textarea id="qmOtherNote" placeholder="其他注意事項..." rows="2" style="width:100%;border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:14px;background:var(--paper);resize:vertical;font-family:inherit;"></textarea>
 
+    <div class="qm-label">機型 System</div>
+    <div class="qm-options qm-sys-opts" id="qmTypeOpts">
+      <div class="qm-opt" data-qmtype="AUX181">AUX Mini VRF<br><span class="qm-sys-sub">18.1 kW · 85 VEECs</span></div>
+      <div class="qm-opt" data-qmtype="AUX200">AUX Mini VRF<br><span class="qm-sys-sub">20.0 kW · 87 VEECs</span></div>
+      <div class="qm-opt" data-qmtype="MULTI19">Rinnai / Carrier<br><span class="qm-sys-sub">Multi 19 kW · 82 VEECs</span></div>
+    </div>
+
     <div class="qm-label">一拖幾 Number of units</div>
-    <div class="qm-options" id="qmCountOpts">
+    <div class="qm-options qm-count-opts" id="qmCountOpts">
+      <div class="qm-opt" data-qmcount="3">3台<br><span style="font-size:10px;font-weight:400">units</span></div>
       <div class="qm-opt" data-qmcount="4">4台<br><span style="font-size:10px;font-weight:400">units</span></div>
       <div class="qm-opt" data-qmcount="5">5台<br><span style="font-size:10px;font-weight:400">units</span></div>
       <div class="qm-opt" data-qmcount="6">6台<br><span style="font-size:10px;font-weight:400">units</span></div>
-    </div>
-
-    <div class="qm-label">機型 System Type</div>
-    <div class="qm-options" id="qmTypeOpts">
-      <div class="qm-opt" data-qmtype="VRF">VRF</div>
-      <div class="qm-opt" data-qmtype="Multi">Multi</div>
+      <div class="qm-opt" data-qmcount="7">7台<br><span style="font-size:10px;font-weight:400">units</span></div>
+      <div class="qm-opt" data-qmcount="8">8台<br><span style="font-size:10px;font-weight:400">units</span></div>
     </div>
 
     <div id="qmComboSection" style="display:none">
@@ -2574,20 +2586,221 @@
    完成度% / 雙層房間數下拉 / 移除舊機台數
 ========================================================================= */
 
-const HP_COMBOS = {
+const SYSTEMS = {
+  AUX181:  { label: 'AUX Mini VRF · ODU 18.1 / 21.5 kW', short: 'AUX Mini VRF 18.1kW', veecs: 85 },
+  AUX200:  { label: 'AUX Mini VRF · ODU 20.0 / 24.1 kW', short: 'AUX Mini VRF 20.0kW', veecs: 87 },
+  MULTI19: { label: 'Rinnai / Carrier Multi Split · ODU 19 kW', short: 'Rinnai / Carrier Multi Split 19kW', veecs: 82 },
+};
+// Sales Quick Combination Guide: combos by system and number of indoor units
+const COMBO_GUIDE = {
+ "AUX181": {
+  "3": [
+   {
+    "key": "A",
+    "label": "7.1 + 5.6×2",
+    "parts": "7.1+5.6+5.6",
+    "kw": "18.3 / 21.1 kW"
+   }
+  ],
   "4": [
-    { key: "A", label: "8.1 + 5.6 + 3.6×2", parts: "8.1+5.6+3.6+3.6" }
+   {
+    "key": "A",
+    "label": "7.1 + 4.5 + 3.6×2",
+    "parts": "7.1+4.5+3.6+3.6",
+    "kw": "18.8 / 21.9 kW"
+   }
   ],
   "5": [
-    { key: "A", label: "7.1 + 5.6 + 2.8×3", parts: "7.1+5.6+2.8+2.8+2.8" },
-    { key: "B", label: "8 + 4.5 + 2.8×3", parts: "8+4.5+2.8+2.8+2.8" },
+   {
+    "key": "A",
+    "label": "7.1 + 2.8×4",
+    "parts": "7.1+2.8+2.8+2.8+2.8",
+    "kw": ""
+   },
+   {
+    "key": "B",
+    "label": "7.1 + 4.5 + 2.8×3",
+    "parts": "7.1+4.5+2.8+2.8+2.8",
+    "kw": ""
+   },
+   {
+    "key": "C",
+    "label": "5.6 + 3.6×2 + 2.8×2",
+    "parts": "5.6+3.6+3.6+2.8+2.8",
+    "kw": "18.4 / 21.6 kW"
+   }
   ],
   "6": [
-    { key: "A", label: "3.6×3 + 2.8×3", parts: "3.6+3.6+3.6+2.8+2.8+2.8" },
-    { key: "B", label: "7.1 + 4.5 + 2.8×3", parts: "7.1+4.5+2.8+2.8+2.8" },
-    { key: "C", label: "4 + 4.5 + 2.8×4", parts: "4+4.5+2.8+2.8+2.8+2.8" },
+   {
+    "key": "A",
+    "label": "4.5 + 2.8×5",
+    "parts": "4.5+2.8+2.8+2.8+2.8+2.8",
+    "kw": ""
+   },
+   {
+    "key": "B",
+    "label": "5.6 + 2.8×5",
+    "parts": "5.6+2.8+2.8+2.8+2.8+2.8",
+    "kw": "19.6 / 23.4 kW"
+   }
+  ],
+  "7": [
+   {
+    "key": "A",
+    "label": "4.5 + 2.8×6",
+    "parts": "4.5+2.8+2.8+2.8+2.8+2.8+2.8",
+    "kw": "21.3 / 25.6 kW"
+   },
+   {
+    "key": "B",
+    "label": "5.6 + 2.8×6",
+    "parts": "5.6+2.8+2.8+2.8+2.8+2.8+2.8",
+    "kw": "22.4 / 26.8 kW"
+   }
+  ],
+  "8": [
+   {
+    "key": "A",
+    "label": "2.8×8",
+    "parts": "2.8+2.8+2.8+2.8+2.8+2.8+2.8+2.8",
+    "kw": "22.4 / 27.2 kW"
+   },
+   {
+    "key": "B",
+    "label": "3.6 + 2.8×7",
+    "parts": "3.6+2.8+2.8+2.8+2.8+2.8+2.8+2.8",
+    "kw": "23.2 / 28 kW"
+   }
   ]
+ },
+ "AUX200": {
+  "4": [
+   {
+    "key": "A",
+    "label": "8 + 5.6 + 3.6×2",
+    "parts": "8+5.6+3.6+3.6",
+    "kw": ""
+   }
+  ],
+  "5": [
+   {
+    "key": "A",
+    "label": "7.1 + 4.5 + 3.6 + 2.8×2",
+    "parts": "7.1+4.5+3.6+2.8+2.8",
+    "kw": "20.8 / 24.5 kW"
+   },
+   {
+    "key": "B",
+    "label": "8 + 4.5 + 2.8×3",
+    "parts": "8+4.5+2.8+2.8+2.8",
+    "kw": "20.9 / 24.7 kW"
+   }
+  ],
+  "6": [
+   {
+    "key": "A",
+    "label": "7.1 + 3.6 + 2.8×4",
+    "parts": "7.1+3.6+2.8+2.8+2.8+2.8",
+    "kw": "21.9 / 26.4 kW"
+   },
+   {
+    "key": "B",
+    "label": "5.6 + 3.6 + 2.8×4",
+    "parts": "5.6+3.6+2.8+2.8+2.8+2.8",
+    "kw": "20.4 / 24.4 kW"
+   },
+   {
+    "key": "C",
+    "label": "7.1 + 4.5 + 2.8×4",
+    "parts": "7.1+4.5+2.8+2.8+2.8+2.8",
+    "kw": "22.8 / 27.1 kW"
+   }
+  ],
+  "7": [
+   {
+    "key": "A",
+    "label": "4.5 + 2.8×6",
+    "parts": "4.5+2.8+2.8+2.8+2.8+2.8+2.8",
+    "kw": "21.3 / 25.6 kW"
+   },
+   {
+    "key": "B",
+    "label": "5.6 + 2.8×6",
+    "parts": "5.6+2.8+2.8+2.8+2.8+2.8+2.8",
+    "kw": "22.4 / 26.8 kW"
+   },
+   {
+    "key": "C",
+    "label": "7.1 + 2.8×6",
+    "parts": "7.1+2.8+2.8+2.8+2.8+2.8+2.8",
+    "kw": "23.9 / 28.7 kW"
+   }
+  ],
+  "8": [
+   {
+    "key": "A",
+    "label": "2.8×8",
+    "parts": "2.8+2.8+2.8+2.8+2.8+2.8+2.8+2.8",
+    "kw": "22.4 / 27.2 kW"
+   },
+   {
+    "key": "B",
+    "label": "3.6 + 2.8×7",
+    "parts": "3.6+2.8+2.8+2.8+2.8+2.8+2.8+2.8",
+    "kw": "23.2 / 28 kW"
+   },
+   {
+    "key": "C",
+    "label": "4.5 + 2.8×7",
+    "parts": "4.5+2.8+2.8+2.8+2.8+2.8+2.8+2.8",
+    "kw": "24.1 / 29 kW"
+   },
+   {
+    "key": "D",
+    "label": "5.6 + 2.8×7",
+    "parts": "5.6+2.8+2.8+2.8+2.8+2.8+2.8+2.8",
+    "kw": "25.2 / 30.2 kW"
+   }
+  ]
+ },
+ "MULTI19": {
+  "4": [
+   {
+    "key": "A",
+    "label": "8 + 5 + 3.5×2",
+    "parts": "8+5+3.5+3.5",
+    "kw": ""
+   }
+  ],
+  "5": [
+   {
+    "key": "A",
+    "label": "7 + 5 + 2.6×3",
+    "parts": "7+5+2.6+2.6+2.6",
+    "kw": ""
+   },
+   {
+    "key": "B",
+    "label": "7 + 5 + 3.5 + 2.6×2",
+    "parts": "7+5+3.5+2.6+2.6",
+    "kw": ""
+   }
+  ],
+  "6": [
+   {
+    "key": "A",
+    "label": "7 + 5 + 2.6×4",
+    "parts": "7+5+2.6+2.6+2.6+2.6",
+    "kw": ""
+   }
+  ]
+ }
 };
+function getCombos(sys, count) { return ((COMBO_GUIDE[sys] || {})[String(count)]) || []; }
+function systemLabel(v, lang) {
+  if (v === '其他') return state.follow['system_type_note'] || (lang === 'en' ? 'Other' : '其他');
+  return SYSTEMS[v] ? SYSTEMS[v].short : (v || '');
+}
 
 const SECTIONS = [
   {
@@ -2653,30 +2866,27 @@ const SECTIONS = [
     sub: "室內機數量、樓層、排水 Unit count, floors, drainage",
     questions: [
       {
-        id: "indoor_count",
-        text: "一拖幾 Number of Indoor Units",
-        options: [
-          { v: "4", label: "4台 4 units" },
-          { v: "5", label: "5台 5 units" },
-          { v: "6", label: "6台 6 units" },
-        ]
-      },
-      {
         id: "system_type",
-        text: "機型 System Type",
+        text: "機型 System",
         options: [
-          { v: "VRF", label: "VRF" },
-          { v: "Multi", label: "Multi" },
+          { v: "AUX181", label: "AUX Mini VRF 18.1 kW · 85 VEECs" },
+          { v: "AUX200", label: "AUX Mini VRF 20.0 kW · 87 VEECs" },
+          { v: "MULTI19", label: "Rinnai / Carrier Multi 19 kW · 82 VEECs" },
           { v: "其他", label: "其他 Other" },
         ],
         noteIf: "其他",
         notePrompt: "請輸入機型名稱 Please enter system type name"
       },
       {
+        id: "indoor_count",
+        text: "一拖幾 Number of Indoor Units",
+        options: [3,4,5,6,7,8].map(n => ({ v: String(n), label: `${n}台 ${n} units` })),
+      },
+      {
         id: "hp_combo",
         type: "hp_combo",
         text: "空調組合 AC Unit Combination",
-        hint: "依照「一拖幾」自動列出常用組合，也可選擇自訂手動輸入 Auto-listed based on unit count, or enter custom combination",
+        hint: "依照機型和一拖幾，列出 Sales Quick Combination Guide 的組合，也可自訂 Listed from the Sales Quick Combination Guide by system and unit count, or enter a custom mix",
         dependsOn: "indoor_count"
       },
       {
@@ -3149,7 +3359,7 @@ function getHpComboLines() {
     }
     return custom ? [custom] : [];
   }
-  const combo = (HP_COMBOS[dependsVal] || []).find(c => c.key === selected);
+  const combo = getCombos(state.answers['system_type'], dependsVal).find(c => c.key === selected);
   if (!combo) return [];
   return partsToKwLines(combo.parts);
 }
@@ -3217,9 +3427,7 @@ function buildWeChatSummary(lang) {
   const name = state.answers['customer_name'] || '';
   const addr = state.answers['address'] || '';
   const indoorCount = state.answers['indoor_count'] || '';
-  const systemType = state.answers['system_type'] === '其他'
-    ? (state.follow['system_type_note'] || (lang === 'en' ? 'Other' : '其他'))
-    : (state.answers['system_type'] || '');
+  const systemType = systemLabel(state.answers['system_type'], lang);
   const kwLines = getHpComboLines();
   const fees = collectFees().map(f => splitBilingual(f, lang));
   const autoSalesNotes = collectSalesNotes().map(n => splitBilingual(n, lang));
@@ -3570,7 +3778,7 @@ function hideQuickPanel() {
   let qmCount = null, qmType = null, qmComboKey = null;
 
   function checkQmReady() {
-    const combos = HP_COMBOS[qmCount] || [];
+    const combos = getCombos(qmType, qmCount);
     const needsCombo = combos.length > 1;
     const ready = qmCount && qmType && (!needsCombo || qmComboKey);
     document.getElementById('qmConfirmBtn').disabled = !ready;
@@ -3579,8 +3787,15 @@ function hideQuickPanel() {
   function renderQmCombos() {
     const comboSection = document.getElementById('qmComboSection');
     const comboOpts = document.getElementById('qmComboOpts');
-    if (!qmCount) { comboSection.style.display = 'none'; return; }
-    const combos = HP_COMBOS[qmCount] || [];
+    if (!qmCount || !qmType) { comboSection.style.display = 'none'; return; }
+    const combos = getCombos(qmType, qmCount);
+    if (combos.length === 0) {
+      qmComboKey = null;
+      comboSection.style.display = 'block';
+      comboOpts.innerHTML = '<div class="qm-combo-none">此機型沒有這個台數的標準組合，請在安裝備註寫明組合並與技術團隊確認 No standard combination for this system and unit count. Note the mix in Install Notes and confirm with the technical team.</div>';
+      checkQmReady();
+      return;
+    }
     if (combos.length <= 1) {
       // only one combo — auto-select it, don't show the section
       qmComboKey = combos[0] ? combos[0].key : null;
@@ -3590,7 +3805,7 @@ function hideQuickPanel() {
     qmComboKey = null;
     comboSection.style.display = 'block';
     comboOpts.innerHTML = combos.map(c => `
-      <div class="qm-opt" data-qmcombo="${c.key}">${c.label}</div>
+      <div class="qm-opt" data-qmcombo="${c.key}">${c.label}${c.kw ? `<span class="qm-combo-kw">${c.kw}</span>` : ''}</div>
     `).join('');
     comboOpts.querySelectorAll('[data-qmcombo]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -3639,6 +3854,8 @@ function hideQuickPanel() {
       document.querySelectorAll('[data-qmtype]').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       qmType = btn.getAttribute('data-qmtype');
+      qmComboKey = null;
+      renderQmCombos();
       checkQmReady();
     });
   });
@@ -3696,7 +3913,7 @@ function hideQuickPanel() {
     if (qmComboKey) {
       state.answers['hp_combo'] = qmComboKey;
     } else {
-      const combos = HP_COMBOS[qmCount] || [];
+      const combos = getCombos(qmType, qmCount);
       if (combos[0]) state.answers['hp_combo'] = combos[0].key;
     }
     state.wechatSummary = null;
@@ -3875,21 +4092,22 @@ function renderQuestion(q) {
   }
   if (q.type === "hp_combo") {
     const dependsVal = state.answers[q.dependsOn];
-    if (!dependsVal || !HP_COMBOS[dependsVal]) {
+    const sysVal = state.answers['system_type'];
+    if (!dependsVal || !sysVal) {
       return `
         <div class="qcard">
           <div class="qtext">${q.text}</div>
-          <div class="qhint">請先選擇「一拖幾」，才會列出對應的空調組合 Please select unit count first to see combinations</div>
+          <div class="qhint">請先選擇機型和一拖幾，才會列出對應的組合 Please select the system and unit count first</div>
         </div>`;
     }
-    const combos = HP_COMBOS[dependsVal];
+    const combos = getCombos(sysVal, dependsVal);
     const selected = state.answers[q.id];
     let comboHtml = combos.map(c => {
       const cls = selected === c.key ? 'combo-opt selected' : 'combo-opt';
       return `
         <div class="${cls}" data-qid="${q.id}" data-val="${c.key}">
           <div class="combo-radio"></div>
-          <div class="combo-label"><span class="combo-tag">${c.key}</span>${c.label}</div>
+          <div class="combo-label"><span class="combo-tag">${c.key}</span>${c.label}${c.kw ? `<span class="combo-kw">${c.kw}</span>` : ''}</div>
         </div>`;
     }).join('');
     const customCls = selected === "custom" ? 'combo-opt selected' : 'combo-opt';
@@ -3907,6 +4125,7 @@ function renderQuestion(q) {
       <div class="qcard">
         <div class="qtext">${q.text}（一拖${dependsVal}）</div>
         ${q.hint ? `<div class="qhint">${q.hint}</div>` : ''}
+        ${combos.length ? '' : '<div class="qhint combo-none">此機型沒有這個台數的標準組合，請與技術團隊確認 No standard combination for this system and unit count. Confirm with the technical team.</div>'}
         <div class="combo-list">${comboHtml}</div>
         ${customInput}
       </div>`;
@@ -4218,7 +4437,7 @@ function renderResults() {
         if (selected === 'custom') {
           label = state.follow[q.id + '_custom'] || '（自訂，未填寫內容）';
         } else {
-          const combo = (HP_COMBOS[dependsVal]||[]).find(c => c.key === selected);
+          const combo = getCombos(state.answers['system_type'], dependsVal).find(c => c.key === selected);
           label = combo ? combo.label : selected;
         }
         return `<div class="res-row"><div class="k">${q.text}</div><div class="v">${label}</div></div>`;
